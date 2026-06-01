@@ -1,36 +1,15 @@
-import {
-  closestCenter,
-  DndContext,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import {
-  ArrowLeft,
   Bell,
   CheckCircle2,
   CircleArrowUp,
-  Copy,
   Download,
   Edit3,
-  GripVertical,
   Info,
   ExternalLink,
   Hammer,
-  KeyRound,
   LayoutDashboard,
-  Link2,
   MessageCircle,
   FileCode2,
   Moon,
@@ -42,14 +21,12 @@ import {
   Rocket,
   Save,
   Settings,
-  ShieldCheck,
   Sun,
-  TestTube,
   Trash2,
   Wrench,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Badge as UiBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -95,7 +72,6 @@ type BackendSettings = {
   codexAppPath: string;
   codexExtraArgs: string[];
   providerSyncEnabled: boolean;
-  relayProfilesEnabled: boolean;
   ccsLinkEnabled: boolean;
   enhancementsEnabled: boolean;
   codexAppPluginEntryUnlock: boolean;
@@ -112,49 +88,10 @@ type BackendSettings = {
   codexAppNativeMenuPlacement: boolean;
   codexAppServiceTierControls: boolean;
   codexGoalsEnabled: boolean;
-  launchMode: LaunchMode;
-  relayBaseUrl: string;
-  relayApiKey: string;
-  relayProfiles: RelayProfile[];
-  relayCommonConfigContents: string;
-  relayContextConfigContents: string;
-  activeRelayId: string;
-  relayTestModel: string;
   cliWrapperEnabled: boolean;
   cliWrapperBaseUrl: string;
   cliWrapperApiKey: string;
   cliWrapperApiKeyEnv: string;
-};
-
-type LaunchMode = "patch" | "relay";
-
-type RelayProfile = {
-  id: string;
-  linkedCcsProviderId: string;
-  name: string;
-  model: string;
-  baseUrl: string;
-  upstreamBaseUrl: string;
-  apiKey: string;
-  protocol: RelayProtocol;
-  relayMode: RelayMode;
-  officialMixApiKey: boolean;
-  testModel: string;
-  configContents: string;
-  authContents: string;
-  useCommonConfig: boolean;
-  contextSelection: RelayContextSelection;
-  contextSelectionInitialized: boolean;
-  contextWindow: string;
-  autoCompactLimit: string;
-  modelList: string;
-  userAgent: string;
-};
-
-type RelayContextSelection = {
-  mcpServers: string[];
-  skills: string[];
-  plugins: string[];
 };
 
 type ContextKind = "mcp" | "skill" | "plugin";
@@ -174,17 +111,7 @@ type CodexContextEntries = {
   plugins: CodexContextEntry[];
 };
 
-type RelayProtocol = "responses" | "chatCompletions";
-type RelayMode = "official" | "mixedApi" | "pureApi";
-const PROTOCOL_PROXY_BASE_URL = "http://127.0.0.1:57321/v1";
-const CHAT_UPSTREAM_BASE_URL_KEY = "codex_plus_chat_base_url";
 const SCRIPT_MARKET_REPOSITORY_URL = "https://github.com/BigPizzaV3/CodexPlusPlusScriptMarket";
-
-const emptyContextSelection = (): RelayContextSelection => ({
-  mcpServers: [],
-  skills: [],
-  plugins: [],
-});
 
 type UserScriptInventory = {
   enabled?: boolean;
@@ -207,24 +134,6 @@ type SettingsResult = CommandResult<{
   settings: BackendSettings;
   settings_path: string;
   user_scripts: UserScriptInventory;
-}>;
-
-type RelayResult = CommandResult<{
-  authenticated: boolean;
-  authSource: string;
-  accountLabel: string | null;
-  configPath: string;
-  configured: boolean;
-  requiresOpenaiAuth: boolean;
-  hasBearerToken: boolean;
-  backupPath: string | null;
-}>;
-
-type RelayFilesResult = CommandResult<{
-  configPath: string;
-  authPath: string;
-  configContents: string;
-  authContents: string;
 }>;
 
 type LocalSession = {
@@ -259,35 +168,9 @@ type LiveContextEntriesResult = CommandResult<{
   entries: CodexContextEntries;
 }>;
 
-type ExtractRelayCommonConfigResult = CommandResult<{
-  commonConfigContents: string;
-  profileConfigContents: string;
-}>;
-
 type SettingsBackfillResult = CommandResult<{
   settings: BackendSettings;
 }>;
-
-type RelayProfileTestResult = CommandResult<{
-  httpStatus: number;
-  endpoint: string;
-  responsePreview: string;
-}>;
-
-type RelayProfileModelsResult = CommandResult<{
-  models: string[];
-  endpoint: string;
-}>;
-
-type CcsProviderImport = {
-  sourceId: string;
-  name: string;
-  baseUrl: string;
-  apiKey: string;
-  protocol: RelayProtocol;
-  configContents: string;
-  authContents: string;
-};
 
 type LogsResult = CommandResult<{
   path: string;
@@ -318,21 +201,6 @@ type UpdateResult = CommandResult<{
   updateAvailable?: boolean;
   installedPath?: string;
   progress?: number;
-}>;
-
-type AdItem = {
-  id?: string;
-  type: "sponsor" | "normal" | string;
-  title: string;
-  description: string;
-  url: string;
-  highlights?: string[];
-  expires_at?: string;
-};
-
-type AdsResult = CommandResult<{
-  version: number;
-  ads: AdItem[];
 }>;
 
 type ScriptMarketItem = {
@@ -390,17 +258,15 @@ type StartupResult = CommandResult<{
   showUpdate: boolean;
 }>;
 
-type Route = "overview" | "relay" | "sessions" | "context" | "enhance" | "userScripts" | "recommendations" | "maintenance" | "about" | "settings";
+type Route = "overview" | "sessions" | "context" | "enhance" | "userScripts" | "maintenance" | "about" | "settings";
 type Theme = "dark" | "light";
 
 const routes: Array<{ id: Route; label: string; icon: LucideIcon }> = [
   { id: "overview", label: "概览", icon: LayoutDashboard },
-  { id: "relay", label: "供应商配置", icon: KeyRound },
   { id: "sessions", label: "会话管理", icon: MessageCircle },
   { id: "context", label: "工具与插件", icon: Network },
   { id: "enhance", label: "页面增强", icon: Hammer },
   { id: "userScripts", label: "脚本市场", icon: FileCode2 },
-  { id: "recommendations", label: "推荐内容", icon: ExternalLink },
   { id: "maintenance", label: "安装维护", icon: Wrench },
   { id: "about", label: "关于", icon: Info },
   { id: "settings", label: "设置", icon: Settings },
@@ -410,7 +276,6 @@ const defaultSettings: BackendSettings = {
   codexAppPath: "",
   codexExtraArgs: [],
   providerSyncEnabled: false,
-  relayProfilesEnabled: true,
   ccsLinkEnabled: false,
   enhancementsEnabled: true,
   codexAppPluginEntryUnlock: true,
@@ -427,37 +292,6 @@ const defaultSettings: BackendSettings = {
   codexAppNativeMenuPlacement: true,
   codexAppServiceTierControls: false,
   codexGoalsEnabled: false,
-  launchMode: "patch",
-  relayBaseUrl: "",
-  relayApiKey: "",
-  relayProfiles: [
-    {
-      id: "default",
-      linkedCcsProviderId: "",
-      name: "默认中转",
-      model: "",
-      baseUrl: "",
-      upstreamBaseUrl: "",
-      apiKey: "",
-      protocol: "responses",
-      relayMode: "official",
-      officialMixApiKey: false,
-      testModel: "",
-      configContents: "",
-      authContents: "",
-      useCommonConfig: true,
-      contextSelection: emptyContextSelection(),
-      contextSelectionInitialized: true,
-      contextWindow: "",
-      autoCompactLimit: "",
-      modelList: "",
-      userAgent: "",
-    },
-  ],
-  relayCommonConfigContents: "",
-  relayContextConfigContents: "",
-  activeRelayId: "default",
-  relayTestModel: "gpt-5.4-mini",
   cliWrapperEnabled: false,
   cliWrapperBaseUrl: "",
   cliWrapperApiKey: "",
@@ -470,15 +304,12 @@ export function App() {
   const [notice, setNotice] = useState<{ title: string; message: string; status?: Status } | null>(null);
   const [overview, setOverview] = useState<OverviewResult | null>(null);
   const [settings, setSettings] = useState<SettingsResult | null>(null);
-  const [relay, setRelay] = useState<RelayResult | null>(null);
-  const [relayFiles, setRelayFiles] = useState<RelayFilesResult | null>(null);
   const [localSessions, setLocalSessions] = useState<LocalSessionsResult | null>(null);
   const [liveContextEntries, setLiveContextEntries] = useState<CodexContextEntries | null>(null);
   const [logs, setLogs] = useState<LogsResult | null>(null);
   const [diagnostics, setDiagnostics] = useState<DiagnosticsResult | null>(null);
   const [watcher, setWatcher] = useState<WatcherResult | null>(null);
   const [update, setUpdate] = useState<UpdateResult | null>(null);
-  const [ads, setAds] = useState<AdsResult | null>(null);
   const [scriptMarket, setScriptMarket] = useState<ScriptMarketResult | null>(null);
   const [launchForm, setLaunchForm] = useState({
     appPath: "",
@@ -566,23 +397,6 @@ export function App() {
     }
   };
 
-  const refreshRelay = async (silent = false) => {
-    const result = await run(() => call<RelayResult>("relay_status"));
-    if (result) {
-      setRelay(result);
-      if (!silent) showResultNotice("登录状态", result, { silentSuccess: true });
-    }
-  };
-
-  const refreshRelayFiles = async (silent = false) => {
-    const result = await run(() => call<RelayFilesResult>("read_relay_files"));
-    if (result) {
-      setRelayFiles(result);
-      if (!silent) showResultNotice("配置文件", result, { silentSuccess: true });
-    }
-    return result;
-  };
-
   const refreshLocalSessions = async (silent = false) => {
     const result = await run(() => call<LocalSessionsResult>("list_local_sessions"));
     if (result) {
@@ -651,18 +465,12 @@ export function App() {
   const navigate = async (next: Route) => {
     setRoute(next);
     if (next === "overview") await refreshOverview(true);
-    if (next === "relay") {
-      await refreshSettings(true);
-      await refreshRelay(true);
-      await refreshRelayFiles(true);
-    }
     if (next === "sessions") {
       await refreshSettings(true);
       await refreshLocalSessions(true);
     }
     if (next === "context") {
       await refreshSettings(true);
-      await refreshRelayFiles(true);
       await refreshLiveContextEntries(true);
     }
     if (next === "settings") await refreshSettings(true);
@@ -670,7 +478,6 @@ export function App() {
       await refreshSettings(true);
       await refreshScriptMarket(true);
     }
-    if (next === "recommendations") await refreshAds(true);
     if (next === "about") {
       await refreshOverview(true);
       await refreshLogs(true);
@@ -811,7 +618,7 @@ export function App() {
     if (!normalized.ccsLinkEnabled || preserveLinkedProfiles) return normalized;
     const refreshed = await refreshSettings(true);
     if (!refreshed) return normalized;
-    return mergeLiveLinkedRelayProfiles(normalized, normalizeSettings(refreshed));
+    return normalizeSettings(refreshed);
   };
 
   const importCcsProviders = async () => {
@@ -832,14 +639,6 @@ export function App() {
     }
   };
 
-  const refreshAds = async (silent = false) => {
-    const result = await run(() => call<AdsResult>("load_ads"));
-    if (result) {
-      setAds(result);
-      if (!silent) showResultNotice("推荐内容", result, { silentSuccess: true });
-    }
-  };
-
   const syncProvidersNow = async () => {
     const result = await run(() => call<CommandResult<Record<string, never>>>("sync_providers_now"));
     if (result) {
@@ -847,80 +646,6 @@ export function App() {
     }
   };
 
-  const applyRelayInjection = async (silent = false) => {
-    const settingsResult = await run(() => call<SettingsResult>("save_settings", { settings: settingsForm }));
-    if (settingsResult) {
-      setSettings(settingsResult);
-      setSettingsForm(normalizeSettings(settingsResult.settings));
-      if (!isSuccessStatus(settingsResult.status)) {
-        showNotice("设置保存", settingsResult.message, settingsResult.status);
-        return false;
-      }
-    } else {
-      return false;
-    }
-    const result = await run(() => call<RelayResult>("apply_relay_injection"));
-    if (result) {
-      setRelay(result);
-      await refreshRelayFiles(true);
-      if (!silent || !isSuccessStatus(result.status)) showNotice("官方混入 API Key", result.message, result.status);
-    }
-    return !!result && isSuccessStatus(result.status) && result.configured;
-  };
-
-  const saveLaunchMode = async (launchMode: LaunchMode, silent = false, baseSettings: BackendSettings = settingsForm) => {
-    const next = { ...baseSettings, launchMode };
-    setSettingsForm(next);
-    const result = await run(() => call<SettingsResult>("save_settings", { settings: next }));
-    if (result) {
-      setSettings(result);
-      setSettingsForm(normalizeSettings(result.settings));
-      if (!silent) showNotice("页面增强模式", result.message, result.status);
-    }
-    return result;
-  };
-
-  const applyPureApiInjection = async (silent = false) => {
-    const settingsResult = await run(() => call<SettingsResult>("save_settings", { settings: settingsForm }));
-    if (settingsResult) {
-      setSettings(settingsResult);
-      setSettingsForm(normalizeSettings(settingsResult.settings));
-      if (!isSuccessStatus(settingsResult.status)) {
-        showNotice("设置保存", settingsResult.message, settingsResult.status);
-        return false;
-      }
-    } else {
-      return false;
-    }
-    const result = await run(() => call<RelayResult>("apply_pure_api_injection"));
-    if (result) {
-      setRelay(result);
-      await refreshRelayFiles(true);
-      if (!silent || !isSuccessStatus(result.status)) showNotice("纯 API 模式", result.message, result.status);
-    }
-    return !!result && isSuccessStatus(result.status) && result.configured;
-  };
-
-  const clearRelayInjection = async (silent = false) => {
-    const result = await run(() => call<RelayResult>("clear_relay_injection"));
-    if (result) {
-      setRelay(result);
-      await refreshRelayFiles(true);
-      if (!silent || !isSuccessStatus(result.status)) showNotice("官方登录模式", result.message, result.status);
-    }
-    return !!result && isSuccessStatus(result.status) && !result.configured;
-  };
-
-  const saveRelayFile = async (kind: "config" | "auth", contents: string, silent = false) => {
-    const result = await run(() => call<RelayFilesResult>("save_relay_file", { request: { kind, contents } }));
-    if (result) {
-      setRelayFiles(result);
-      if (!silent || !isSuccessStatus(result.status)) {
-        showNotice(kind === "config" ? "config.toml" : "auth.json", result.message, result.status);
-      }
-      await refreshRelay(true);
-    }
-  };
 
   const upsertContextEntry = async (next: BackendSettings, kind: ContextKind, id: string, tomlBody: string) => {
     const result = await run(() =>
@@ -956,199 +681,6 @@ export function App() {
     setSettingsForm(normalized);
     if (!isSuccessStatus(result.status)) showResultNotice("工具与插件", result);
     return normalized;
-  };
-
-  const extractRelayCommonConfig = async (configContents: string) => {
-    const result = await run(() =>
-      call<ExtractRelayCommonConfigResult>("extract_relay_common_config", {
-        request: { configContents },
-      }),
-    );
-    if (result) showResultNotice("通用配置文件", result);
-    return result && isSuccessStatus(result.status) ? result : null;
-  };
-
-  const testRelayProfile = async (profile: RelayProfile) => {
-    const result = await run(() => call<RelayProfileTestResult>("test_relay_profile", { profile }));
-    if (result) showNotice("供应商测试", result.message, result.status);
-  };
-
-  const fetchRelayProfileModels = async (profile: RelayProfile) => {
-    const result = await run(() => call<RelayProfileModelsResult>("fetch_relay_profile_models", { profile }));
-    if (result) showNotice("模型列表", result.message, result.status);
-    return result && isSuccessStatus(result.status) ? result.models : null;
-  };
-
-  const switchOfficialMode = async () => {
-    const switched = await clearRelayInjection(true);
-    if (!switched) return;
-    const result = await saveLaunchMode("relay", true);
-    if (result) showNotice("官方登录模式", "已切回官方登录；页面增强已设为兼容增强。", result.status);
-  };
-
-  const switchPureApiMode = async () => {
-    const switched = await applyPureApiInjection(true);
-    if (!switched) return;
-    const result = await saveLaunchMode("patch", true);
-    if (result) showNotice("纯 API 模式", "已切换到纯 API；页面增强已设为完整增强。", result.status);
-  };
-
-  const switchRelayProfile = async (next: BackendSettings, previousActiveRelayId = settingsForm.activeRelayId) => {
-    let switchSettings = normalizeSettings(next);
-    if (switchSettings.ccsLinkEnabled) {
-      const targetRelayId = switchSettings.activeRelayId;
-      const refreshed = await refreshSettings(true);
-      if (!refreshed) return;
-      const latest = normalizeSettings(refreshed);
-      if (!latest.relayProfiles.some((profile) => profile.id === targetRelayId)) {
-        showNotice("供应商切换", "目标供应商已不在 cc-switch 或本地配置中，请刷新供应商列表后重试。", "failed");
-        return;
-      }
-      switchSettings = syncLegacyRelayFields({ ...latest, activeRelayId: targetRelayId });
-    }
-    if (!switchSettings.relayProfilesEnabled) {
-      showNotice("供应商配置已关闭", "当前不会写入 Codex config.toml / auth.json。打开供应商配置总开关后再切换。", "failed");
-      return;
-    }
-    const targetBeforeSnapshot = activeRelayProfile(switchSettings);
-    logDiagnostic("switchRelayProfile.start", {
-      currentRelayId: settingsForm.activeRelayId,
-      targetRelayId: switchSettings.activeRelayId,
-      targetRelayName: targetBeforeSnapshot.name,
-      targetRelayMode: targetBeforeSnapshot.relayMode,
-      ccsLinkEnabled: switchSettings.ccsLinkEnabled,
-    });
-    const nextWithSnapshot = await snapshotActiveRelayFilesBeforeSwitch(switchSettings, previousActiveRelayId);
-    if (!nextWithSnapshot) {
-      logDiagnostic("switchRelayProfile.snapshot_failed", {
-        currentRelayId: settingsForm.activeRelayId,
-        targetRelayId: switchSettings.activeRelayId,
-      });
-      return;
-    }
-
-    const selectedBeforeSave = activeRelayProfile(nextWithSnapshot);
-    const validationError = relayProfileSwitchValidation(selectedBeforeSave);
-    if (validationError) {
-      logDiagnostic("switchRelayProfile.validation_failed", {
-        targetRelayId: selectedBeforeSave.id,
-        targetRelayName: selectedBeforeSave.name,
-        error: validationError,
-      });
-      showNotice("供应商配置可能不正确", validationError, "failed");
-      return;
-    }
-
-    let selectedSettings = nextWithSnapshot;
-    logDiagnostic("switchRelayProfile.save_settings_start", {
-      targetRelayId: selectedBeforeSave.id,
-      targetRelayName: selectedBeforeSave.name,
-    });
-    const settingsResult = await run(() => call<SettingsResult>("save_settings", { settings: nextWithSnapshot }));
-    if (settingsResult) {
-      selectedSettings = normalizeSettings(settingsResult.settings);
-      setSettings(settingsResult);
-      setSettingsForm(selectedSettings);
-      if (!isSuccessStatus(settingsResult.status)) {
-        logDiagnostic("switchRelayProfile.save_settings_failed", {
-          targetRelayId: selectedBeforeSave.id,
-          status: settingsResult.status,
-          message: settingsResult.message,
-        });
-        showNotice("供应商切换", settingsResult.message, settingsResult.status);
-        return;
-      }
-    } else {
-      logDiagnostic("switchRelayProfile.save_settings_no_result", {
-        targetRelayId: selectedBeforeSave.id,
-      });
-      return;
-    }
-
-    const selectedAfterSave = activeRelayProfile(selectedSettings);
-    const command = relayProfileSwitchCommand(selectedAfterSave);
-    logDiagnostic("switchRelayProfile.apply_start", {
-      targetRelayId: selectedAfterSave.id,
-      targetRelayName: selectedAfterSave.name,
-      command,
-    });
-    const result = await run(() => call<RelayResult>(command));
-    if (!result) {
-      logDiagnostic("switchRelayProfile.apply_no_result", {
-        targetRelayId: selectedAfterSave.id,
-        command,
-      });
-      return;
-    }
-
-    setRelay(result);
-    await refreshRelayFiles(true);
-    if (!isSuccessStatus(result.status) || (selectedAfterSave.relayMode === "pureApi" && !result.configured)) {
-      logDiagnostic("switchRelayProfile.apply_failed", {
-        targetRelayId: selectedAfterSave.id,
-        command,
-        status: result.status,
-        message: result.message,
-        configured: result.configured,
-      });
-      showNotice("供应商切换", relayProfileReadinessText(selectedAfterSave, result), result.status);
-      return;
-    }
-
-    const currentSelected = activeRelayProfile(selectedSettings);
-    const launchMode = currentSelected.relayMode === "pureApi" ? "patch" : "relay";
-    logDiagnostic("switchRelayProfile.launch_mode_start", {
-      targetRelayId: currentSelected.id,
-      launchMode,
-    });
-    const modeResult = await saveLaunchMode(launchMode, true, selectedSettings);
-    if (modeResult) {
-      logDiagnostic("switchRelayProfile.ok", {
-        targetRelayId: currentSelected.id,
-        launchMode,
-        status: modeResult.status,
-      });
-      showNotice("供应商切换", relayProfileModeSwitchedText(currentSelected), modeResult.status);
-    } else {
-      logDiagnostic("switchRelayProfile.launch_mode_no_result", {
-        targetRelayId: currentSelected.id,
-        launchMode,
-      });
-    }
-  };
-
-  const snapshotActiveRelayFilesBeforeSwitch = async (next: BackendSettings, previousActiveRelayId: string): Promise<BackendSettings | null> => {
-    const current = settingsForm.relayProfiles.find((profile) => profile.id === previousActiveRelayId) || activeRelayProfile(settingsForm);
-    const selected = activeRelayProfile(next);
-    if (current.id === selected.id) return next;
-
-    logDiagnostic("snapshotActiveRelayFilesBeforeSwitch.start", {
-      currentRelayId: current.id,
-      currentRelayName: current.name,
-      selectedRelayId: selected.id,
-      selectedRelayName: selected.name,
-    });
-    const result = await run(() =>
-      call<SettingsBackfillResult>("backfill_relay_profile_from_live", {
-        request: { settings: next, profileId: current.id },
-      }),
-    );
-    if (!result || !isSuccessStatus(result.status)) {
-      logDiagnostic("snapshotActiveRelayFilesBeforeSwitch.failed", {
-        currentRelayId: current.id,
-        selectedRelayId: selected.id,
-        status: result?.status,
-        message: result?.message,
-      });
-      showNotice("供应商切换", result?.message ?? "读取当前配置文件失败，已停止切换以避免覆盖用户改动。", result?.status ?? "failed");
-      return null;
-    }
-
-    logDiagnostic("snapshotActiveRelayFilesBeforeSwitch.ok", {
-      currentRelayId: current.id,
-      selectedRelayId: selected.id,
-    });
-    return syncLegacyRelayFields(normalizeSettings(result.settings));
   };
 
 
@@ -1191,7 +723,6 @@ export function App() {
       }
       await refreshOverview(true);
       await refreshSettings(true);
-      await refreshRelay(true);
     })();
   }, []);
 
@@ -1270,15 +801,9 @@ export function App() {
         }
       },
       syncProvidersNow,
-      setLaunchMode: async (launchMode: LaunchMode) => {
-        await saveLaunchMode(launchMode);
-      },
-      refreshRelay,
-      refreshRelayFiles,
       refreshLiveContextEntries,
       syncLiveContextEntries,
       importCcsProviders,
-      refreshAds,
       refreshScriptMarket,
       installMarketScript,
       setUserScriptEnabled,
@@ -1286,18 +811,8 @@ export function App() {
       refreshLocalSessions,
       deleteLocalSession,
       openExternalUrl,
-      applyRelayInjection,
-      applyPureApiInjection,
-      clearRelayInjection,
-      saveRelayFile,
       upsertContextEntry,
       deleteContextEntry,
-      extractRelayCommonConfig,
-      testRelayProfile,
-      fetchRelayProfileModels,
-      switchRelayProfile,
-      switchOfficialMode,
-      switchPureApiMode,
       refreshLogs,
       refreshDiagnostics,
       showMessage: async (title: string, message: string, status?: Status) => showNotice(title, message, status),
@@ -1306,7 +821,6 @@ export function App() {
       goLogs: () => navigate("about"),
       checkHealth: async () => {
         await refreshOverview(true);
-        await refreshRelay(true);
         await refreshWatcher(true);
         showNotice("检查完成", "已刷新 Codex 应用、入口和 Watcher 状态。", "ok");
       },
@@ -1316,7 +830,7 @@ export function App() {
       disableWatcher: () => watcherAction("disable_watcher"),
       toggleTheme: () => setTheme((current) => (current === "dark" ? "light" : "dark")),
     }),
-    [route, launchForm, settingsForm, settings, removeOwnedData, update, logs, diagnostics, theme, relayFiles, localSessions],
+    [route, launchForm, settingsForm, settings, removeOwnedData, update, logs, diagnostics, theme, localSessions],
   );
   const hasUpdate = update?.updateAvailable === true;
 
@@ -1396,15 +910,6 @@ export function App() {
               actions={actions}
             />
           ) : null}
-          {route === "relay" ? (
-            <RelayScreen
-              settings={settings}
-              relayFiles={relayFiles}
-              form={settingsForm}
-              onFormChange={setSettingsForm}
-              actions={actions}
-            />
-          ) : null}
           {route === "sessions" ? (
             <SessionsScreen
               settings={settings}
@@ -1418,7 +923,6 @@ export function App() {
             <ContextScreen
               form={settingsForm}
               liveEntries={liveContextEntries}
-              relayFiles={relayFiles}
               onFormChange={setSettingsForm}
               actions={actions}
             />
@@ -1427,7 +931,6 @@ export function App() {
             <EnhanceScreen form={settingsForm} onFormChange={setSettingsForm} actions={actions} />
           ) : null}
           {route === "userScripts" ? <UserScriptsScreen settings={settings} market={scriptMarket} actions={actions} /> : null}
-          {route === "recommendations" ? <RecommendationsScreen ads={ads} actions={actions} /> : null}
           {route === "maintenance" ? (
             <MaintenanceScreen
               overview={overview}
@@ -1475,13 +978,9 @@ type Actions = {
   clearCodexAppPath: () => Promise<void>;
   saveManualCodexAppPath: () => Promise<void>;
   syncProvidersNow: () => Promise<void>;
-  setLaunchMode: (launchMode: LaunchMode) => Promise<void>;
-  refreshRelay: () => Promise<void>;
-  refreshRelayFiles: () => Promise<RelayFilesResult | null>;
   refreshLiveContextEntries: () => Promise<LiveContextEntriesResult | null>;
   syncLiveContextEntries: (settings: BackendSettings, silent?: boolean) => Promise<LiveContextEntriesResult | null>;
   importCcsProviders: () => Promise<void>;
-  refreshAds: () => Promise<void>;
   refreshScriptMarket: () => Promise<void>;
   installMarketScript: (id: string) => Promise<void>;
   setUserScriptEnabled: (key: string, enabled: boolean) => Promise<void>;
@@ -1489,10 +988,6 @@ type Actions = {
   refreshLocalSessions: () => Promise<LocalSessionsResult | null>;
   deleteLocalSession: (session: LocalSession) => Promise<void>;
   openExternalUrl: (url: string) => Promise<void>;
-  applyRelayInjection: () => Promise<boolean>;
-  applyPureApiInjection: () => Promise<boolean>;
-  clearRelayInjection: () => Promise<boolean>;
-  saveRelayFile: (kind: "config" | "auth", contents: string, silent?: boolean) => Promise<void>;
   upsertContextEntry: (
     settings: BackendSettings,
     kind: ContextKind,
@@ -1500,12 +995,6 @@ type Actions = {
     tomlBody: string,
   ) => Promise<BackendSettings | null>;
   deleteContextEntry: (settings: BackendSettings, kind: ContextKind, id: string) => Promise<BackendSettings | null>;
-  extractRelayCommonConfig: (configContents: string) => Promise<ExtractRelayCommonConfigResult | null>;
-  testRelayProfile: (profile: RelayProfile) => Promise<void>;
-  fetchRelayProfileModels: (profile: RelayProfile) => Promise<string[] | null>;
-  switchRelayProfile: (settings: BackendSettings, previousActiveRelayId?: string) => Promise<void>;
-  switchOfficialMode: () => Promise<void>;
-  switchPureApiMode: () => Promise<void>;
   refreshLogs: () => Promise<void>;
   refreshDiagnostics: () => Promise<void>;
   showMessage: (title: string, message: string, status?: Status) => Promise<void>;
@@ -1587,136 +1076,6 @@ function OverviewScreen({
   );
 }
 
-function RelayScreen({
-  settings: _settings,
-  relayFiles,
-  form,
-  onFormChange,
-  actions,
-}: {
-  settings: SettingsResult | null;
-  relayFiles: RelayFilesResult | null;
-  form: BackendSettings;
-  onFormChange: (value: BackendSettings) => void;
-  actions: Actions;
-}) {
-  const normalized = normalizeSettings(form);
-  const [detailProfileId, setDetailProfileId] = useState<string | null>(null);
-  const [newProfileDraft, setNewProfileDraft] = useState<RelayProfile | null>(null);
-  const detailProfile = newProfileDraft || (detailProfileId
-    ? normalized.relayProfiles.find((profile) => profile.id === detailProfileId) || null
-    : null);
-  const isNewProfile = !!newProfileDraft;
-  const saveRelaySettings = (next: BackendSettings, preserveLinkedProfiles = false) => {
-    onFormChange(next);
-    void actions.saveSettingsValue(next, true, preserveLinkedProfiles);
-  };
-  const editRelayProfile = async (profileId: string) => {
-    let nextSettings = normalized;
-    const profile = normalized.relayProfiles.find((item) => item.id === profileId);
-    if (profile?.linkedCcsProviderId && normalized.ccsLinkEnabled) {
-      const refreshed = await actions.refreshSettings(true);
-      if (refreshed) nextSettings = normalizeSettings(refreshed);
-    }
-    setNewProfileDraft(null);
-    setDetailProfileId(
-      nextSettings.relayProfiles.some((item) => item.id === profileId) ? profileId : null,
-    );
-  };
-  useEffect(() => {
-    if (!newProfileDraft && detailProfileId && !normalized.relayProfiles.some((profile) => profile.id === detailProfileId)) {
-      setDetailProfileId(null);
-    }
-  }, [detailProfileId, newProfileDraft, normalized.relayProfiles]);
-  useEffect(() => {
-    if (!newProfileDraft && detailProfileId === normalized.activeRelayId) {
-      void actions.refreshRelayFiles();
-    }
-  }, [detailProfileId, newProfileDraft, normalized.activeRelayId]);
-
-  if (detailProfile) {
-    return (
-      <RelayProfileDetail
-        profile={detailProfile}
-        relayFiles={!isNewProfile && detailProfile.id === normalized.activeRelayId ? relayFiles : null}
-        form={normalized}
-        isNew={isNewProfile}
-        onBack={() => {
-          setNewProfileDraft(null);
-          setDetailProfileId(null);
-        }}
-        onFormChange={saveRelaySettings}
-        onSaved={() => {
-          setNewProfileDraft(null);
-          setDetailProfileId(null);
-        }}
-        actions={actions}
-      />
-    );
-  }
-
-  return (
-    <>
-      <Panel>
-        <CardHead title="供应商列表" detail={`${normalized.relayProfiles.length} 个供应商配置；可拖动排序，点编辑进入详情`} />
-        <CardContent>
-          <label className="switch-row relay-master-switch">
-            <input
-              checked={normalized.relayProfilesEnabled}
-              onChange={(event) => {
-                const next = { ...normalized, relayProfilesEnabled: event.currentTarget.checked };
-                saveRelaySettings(next);
-              }}
-              type="checkbox"
-            />
-            <span>
-              <strong>启用供应商配置切换</strong>
-              <small>关闭后本工具不会在手动切换时写入 Codex 的 config.toml / auth.json；启动 Codex 时始终不会自动改这些文件。</small>
-            </span>
-          </label>
-          <label className="switch-row relay-link-switch">
-            <input
-              checked={normalized.ccsLinkEnabled}
-              onChange={(event) => {
-                if (event.currentTarget.checked) {
-                  void actions.importCcsProviders();
-                  return;
-                }
-                const next = { ...normalized, ccsLinkEnabled: false };
-                saveRelaySettings(next);
-              }}
-              type="checkbox"
-            />
-            <span>
-              <strong>联动 cc-switch</strong>
-              <small>开启后读取 cc-switch Codex 供应商并保存时回写；同时使用多个管理工具可能导致 config.toml / auth.json 被反复覆盖。</small>
-            </span>
-          </label>
-          <div className="relay-add-row">
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setNewProfileDraft(createRelayProfile(normalized));
-                setDetailProfileId(null);
-              }}
-            >
-              <Plus className="h-4 w-4" />
-              添加供应商
-            </Button>
-          </div>
-          <RelayProfileList
-            form={normalized}
-            onEdit={(profileId) => void editRelayProfile(profileId)}
-            onFormChange={saveRelaySettings}
-            disabled={!normalized.relayProfilesEnabled}
-            actions={actions}
-          />
-        </CardContent>
-      </Panel>
-    </>
-  );
-}
-
 function EnhanceScreen({
   form,
   onFormChange,
@@ -1728,7 +1087,6 @@ function EnhanceScreen({
 }) {
   const setEnhanceFlag = (key: keyof BackendSettings, value: boolean) => onFormChange({ ...form, [key]: value });
   const masterEnabled = form.enhancementsEnabled;
-  const patchMode = form.launchMode === "patch";
   return (
     <>
       <Panel>
@@ -1745,16 +1103,9 @@ function EnhanceScreen({
               <small>关闭后会停用删除、导出、项目移动、Timeline、插件相关和菜单位置增强。</small>
             </span>
           </label>
-          <ModeSelector launchMode={form.launchMode} actions={actions} />
-          {form.launchMode === "relay" ? (
-            <div className="hint-line">
-              <ShieldCheck className="h-4 w-4" />
-              <span>当前为兼容增强模式，插件入口解锁和特殊插件强制安装不会启用；其他页面功能仍可用。</span>
-            </div>
-          ) : null}
           <div className="feature-switch-grid">
-            <FeatureToggle title="插件入口解锁" detail="显示并启用 Codex 插件入口；官方/混合模式通常不需要。" checked={form.codexAppPluginEntryUnlock} disabled={!masterEnabled || !patchMode} onChange={(value) => setEnhanceFlag("codexAppPluginEntryUnlock", value)} />
-            <FeatureToggle title="特殊插件强制安装" detail="解除 App unavailable / 应用不可用导致的前端安装禁用。" checked={form.codexAppForcePluginInstall} disabled={!masterEnabled || !patchMode} onChange={(value) => setEnhanceFlag("codexAppForcePluginInstall", value)} />
+            <FeatureToggle title="插件入口解锁" detail="显示并启用 Codex 插件入口；官方/混合模式通常不需要。" checked={form.codexAppPluginEntryUnlock} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppPluginEntryUnlock", value)} />
+            <FeatureToggle title="特殊插件强制安装" detail="解除 App unavailable / 应用不可用导致的前端安装禁用。" checked={form.codexAppForcePluginInstall} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppForcePluginInstall", value)} />
             <FeatureToggle title="模型白名单解锁" detail="从环境变量和 config.toml 的 /v1/models 拉取模型并补进模型列表。" checked={form.codexAppModelWhitelistUnlock} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppModelWhitelistUnlock", value)} />
             <FeatureToggle title="Fast 按钮" detail="显示服务模式切换按钮，可控制 Standard / Fast / priority。" checked={form.codexAppServiceTierControls} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppServiceTierControls", value)} />
             <FeatureToggle title="会话删除" detail="在会话列表悬停显示删除按钮，并支持撤销。" checked={form.codexAppSessionDelete} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppSessionDelete", value)} />
@@ -1766,10 +1117,6 @@ function EnhanceScreen({
             <FeatureToggle title="Zed Remote open" detail="远程 SSH 文件引用可直接用 Zed Remote Development 打开。" checked={form.codexAppZedRemoteOpen} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppZedRemoteOpen", value)} />
             <FeatureToggle title="Upstream worktree" detail="从最新 upstream 分支创建 Git worktree。" checked={form.codexAppUpstreamWorktreeCreate} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppUpstreamWorktreeCreate", value)} />
             <FeatureToggle title="原生菜单栏位置" detail="把 Codex++ 菜单插入 Codex 顶部原生菜单栏。" checked={form.codexAppNativeMenuPlacement} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppNativeMenuPlacement", value)} />
-          </div>
-          <div className="hint-line">
-            <Info className="h-4 w-4" />
-            <span>如果使用官方模式或官方混入 API 模式，不需要开启插件入口解锁和特殊插件强制安装。</span>
           </div>
           <Toolbar>
             <Button onClick={() => void actions.saveSettings()}>保存增强设置</Button>
@@ -1922,43 +1269,6 @@ function SessionsScreen({
           ) : (
             <div className="empty">未读取到本地会话，或当前 state_5.sqlite 不存在。</div>
           )}
-        </CardContent>
-      </Panel>
-    </>
-  );
-}
-
-function RecommendationsScreen({ ads, actions }: { ads: AdsResult | null; actions: Actions }) {
-  const items = (ads?.ads ?? []).filter((ad) => !isExpiredAd(ad));
-  const sponsors = items.filter((ad) => ad.type === "sponsor");
-  const normal = items.filter((ad) => ad.type === "normal");
-  return (
-    <>
-      <Panel>
-        <CardHead title="推荐内容" detail="与 Codex 内插件菜单使用同一个远端广告源" />
-        <CardContent>
-          <div className="recommend-hero">
-            <div>
-              <strong>{ads ? `已加载 ${items.length} 条推荐` : "尚未加载推荐内容"}</strong>
-              <span>内容来自 BigPizzaV3/Ad-List，分为赞助商推荐和普通推荐。</span>
-            </div>
-            <Button onClick={() => void actions.refreshAds()}>
-              <RefreshCw className="h-4 w-4" />
-              刷新推荐
-            </Button>
-          </div>
-        </CardContent>
-      </Panel>
-      <Panel>
-        <CardHead title="赞助商推荐" detail={`${sponsors.length} 条`} />
-        <CardContent>
-          <AdGrid actions={actions} ads={sponsors} empty="暂无赞助商推荐。" />
-        </CardContent>
-      </Panel>
-      <Panel>
-        <CardHead title="普通推荐" detail={`${normal.length} 条`} />
-        <CardContent>
-          <AdGrid actions={actions} ads={normal} empty="暂无普通推荐。" />
         </CardContent>
       </Panel>
     </>
@@ -2175,13 +1485,6 @@ function SettingsScreen({
             </div>
             <Button variant="secondary" onClick={actions.toggleTheme}>切换主题</Button>
           </div>
-          <Field label="供应商测试模型">
-            <Input
-              value={form.relayTestModel}
-              onChange={(event) => onFormChange({ ...form, relayTestModel: event.currentTarget.value })}
-              placeholder="例如 gpt-5.4-mini"
-            />
-          </Field>
           <label className="check-row">
             <input
               checked={form.cliWrapperEnabled}
@@ -2292,178 +1595,6 @@ function DiagnosticsPanel({ diagnostics, actions }: { diagnostics: DiagnosticsRe
   );
 }
 
-function RelayProfileList({
-  form,
-  onFormChange,
-  onEdit,
-  disabled = false,
-  actions,
-}: {
-  form: BackendSettings;
-  onFormChange: (value: BackendSettings) => void;
-  onEdit: (id: string) => void;
-  disabled?: boolean;
-  actions: Actions;
-}) {
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  );
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const next = reorderRelayProfiles(form, String(active.id), String(over.id));
-    if (next !== form) onFormChange(next);
-  };
-  return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <SortableContext items={form.relayProfiles.map((profile) => profile.id)} strategy={verticalListSortingStrategy}>
-        <div className="relay-profile-list">
-          {form.relayProfiles.map((profile, index) => (
-            <SortableRelayProfileCard
-              actions={actions}
-              form={form}
-              index={index}
-              key={profile.id}
-              onEdit={onEdit}
-              onFormChange={onFormChange}
-              disabled={disabled}
-              profile={profile}
-            />
-          ))}
-        </div>
-      </SortableContext>
-    </DndContext>
-  );
-}
-
-function SortableRelayProfileCard({
-  form,
-  profile,
-  index,
-  onFormChange,
-  onEdit,
-  disabled = false,
-  actions,
-}: {
-  form: BackendSettings;
-  profile: RelayProfile;
-  index: number;
-  onFormChange: (value: BackendSettings) => void;
-  onEdit: (id: string) => void;
-  disabled?: boolean;
-  actions: Actions;
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: profile.id });
-  const active = profile.id === form.activeRelayId;
-  const style: CSSProperties = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  return (
-    <div
-      className={`relay-profile-card ${active ? "active" : ""} ${isDragging ? "dragging" : ""}`}
-      data-relay-profile-id={profile.id}
-      key={profile.id}
-      onKeyDown={(event) => {
-        if (event.key === "Enter") onEdit(profile.id);
-      }}
-      ref={setNodeRef}
-      style={style}
-      tabIndex={0}
-    >
-      <button
-        aria-label="拖动排序"
-        className="relay-drag"
-        title="拖动排序"
-        type="button"
-        {...attributes}
-        {...listeners}
-      >
-        <GripVertical className="h-4 w-4" />
-      </button>
-      <span className="relay-index" title={profile.name || "未命名供应商"}>
-        {providerInitial(profile.name)}
-      </span>
-      <span className="relay-summary">
-        <strong>{profile.name || "未命名供应商"}</strong>
-        <small>{relayProfileSourceLabel(profile)} · {relayModeLabel(profile.relayMode)} · {relayProtocolLabel(profile.protocol)} · {relayProfileConfigBrief(profile)}</small>
-      </span>
-      <span className="relay-card-actions">
-        <Button
-          className={`relay-use-button ${active ? "active" : ""}`}
-          disabled={disabled}
-          onClick={(event) => {
-            event.stopPropagation();
-            if (disabled) return;
-            const previousActiveRelayId = form.activeRelayId;
-            const next = syncLegacyRelayFields({ ...form, activeRelayId: profile.id });
-            void actions.switchRelayProfile(next, previousActiveRelayId);
-          }}
-          size="sm"
-          title={disabled ? "供应商配置总开关已关闭" : active ? "当前正在使用" : "设为当前"}
-          variant={active ? "secondary" : "outline"}
-        >
-          <CheckCircle2 className="h-4 w-4" />
-          {active ? "使用中" : "使用"}
-        </Button>
-        <span className="relay-card-extra">
-          <Button
-            onClick={(event) => {
-              event.stopPropagation();
-              void actions.testRelayProfile(profile);
-            }}
-            size="icon"
-            title="发送 hi 测试"
-            variant="ghost"
-          >
-            <TestTube className="h-4 w-4" />
-          </Button>
-          <Button
-            onClick={(event) => {
-              event.stopPropagation();
-              onEdit(profile.id);
-            }}
-            size="icon"
-            title="编辑"
-            variant="ghost"
-          >
-            <Edit3 className="h-4 w-4" />
-          </Button>
-          <Button
-            onClick={(event) => {
-              event.stopPropagation();
-              onFormChange(duplicateRelayProfile(form, profile.id));
-            }}
-            size="icon"
-            title="复制"
-            variant="ghost"
-          >
-            <Copy className="h-4 w-4" />
-          </Button>
-          <Button
-            disabled={form.relayProfiles.length <= 1}
-            onClick={(event) => {
-              event.stopPropagation();
-              onFormChange(removeRelayProfile(form, profile.id));
-            }}
-            size="icon"
-            title="删除供应商"
-            variant="ghost"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </span>
-      </span>
-    </div>
-  );
-}
-
 function MarketScriptCard({ script, actions }: { script: ScriptMarketItem; actions: Actions }) {
   const status = script.updateAvailable ? "可更新" : script.installed ? `已安装 ${script.installedVersion}` : "未安装";
   return (
@@ -2498,106 +1629,14 @@ function MarketScriptCard({ script, actions }: { script: ScriptMarketItem; actio
   );
 }
 
-function RelayProfileDetail({
-  profile,
-  relayFiles,
-  form,
-  isNew = false,
-  onBack,
-  onFormChange,
-  onSaved,
-  actions,
-}: {
-  profile: RelayProfile;
-  relayFiles: RelayFilesResult | null;
-  form: BackendSettings;
-  isNew?: boolean;
-  onBack: () => void;
-  onFormChange: (value: BackendSettings, preserveLinkedProfiles?: boolean) => void;
-  onSaved?: () => void;
-  actions: Actions;
-}) {
-  const [draft, setDraft] = useState<RelayProfile>(profile);
-  const isActive = !isNew && profile.id === form.activeRelayId;
-  useEffect(() => {
-    setDraft(
-      deriveRelayProfileFromFiles(
-        isActive && relayFiles
-          ? {
-            ...profile,
-            configContents: relayFiles.configContents,
-            authContents: relayFiles.authContents,
-          }
-          : profile,
-      ),
-    );
-  }, [profile.id, isActive, isNew, relayFiles?.configContents, relayFiles?.authContents]);
-  const saveDraft = async () => {
-    const normalizedDraft = deriveRelayProfileFromFiles(draft);
-    const next = isNew
-      ? addRelayProfile(form, normalizedDraft)
-      : updateRelayProfile(form, profile.id, normalizedDraft);
-    onFormChange(next, !!normalizedDraft.linkedCcsProviderId);
-    if (isActive) {
-      await actions.saveRelayFile(
-        "config",
-        effectiveRelayConfigPreview(normalizedDraft, form, normalizedDraft),
-        true,
-      );
-      await actions.saveRelayFile("auth", normalizedDraft.authContents, true);
-    }
-    onSaved?.();
-  };
-  const switchDraft = () => {
-    if (isNew || !form.relayProfilesEnabled) return;
-    const normalizedDraft = deriveRelayProfileFromFiles(draft);
-    const previousActiveRelayId = form.activeRelayId;
-    const next = syncLegacyRelayFields({
-      ...form,
-      relayProfiles: form.relayProfiles.map((item) => (item.id === profile.id ? normalizedDraft : item)),
-      activeRelayId: profile.id,
-    });
-    void actions.switchRelayProfile(next, previousActiveRelayId);
-  };
-  return (
-    <div className="relay-detail-page" key={profile.id}>
-      <div className="relay-detail-sticky">
-        <Toolbar>
-          <Button onClick={onBack} variant="secondary">
-            <ArrowLeft className="h-4 w-4" />
-            返回列表
-          </Button>
-          <Button onClick={() => void saveDraft()}>
-            <Save className="h-4 w-4" />
-            保存
-          </Button>
-        </Toolbar>
-      </div>
-        <RelayProfileEditor profile={draft} form={form} isNew={isNew} onProfileChange={setDraft} onSwitch={switchDraft} actions={actions} />
-      <RelayFileEditors
-        contextProfile={profile}
-        profile={draft}
-        form={form}
-        isActive={isActive}
-        profileId={profile.id}
-        onFormChange={onFormChange}
-        onProfileChange={setDraft}
-        actions={actions}
-      />
-    </div>
-  );
-}
-
 function ContextScreen({
   form,
   liveEntries,
-  relayFiles,
   onFormChange,
   actions,
 }: {
   form: BackendSettings;
   liveEntries: CodexContextEntries | null;
-  relayFiles: RelayFilesResult | null;
   onFormChange: (value: BackendSettings) => void;
   actions: Actions;
 }) {
@@ -2605,10 +1644,9 @@ function ContextScreen({
     <Panel fill>
       <CardHead title="Codex 工具与插件" detail="独立管理 Codex 的 MCP、Skills、Plugins；切换任意供应商都会带上。" />
       <CardContent>
-        <RelayContextManager
+        <ContextManager
           form={normalizeSettings(form)}
           liveEntries={liveEntries}
-          relayFiles={relayFiles}
           onFormChange={onFormChange}
           actions={actions}
         />
@@ -2617,238 +1655,14 @@ function ContextScreen({
   );
 }
 
-function RelayProfileEditor({
-  profile,
-  form,
-  isNew = false,
-  onProfileChange,
-  onSwitch,
-  actions,
-}: {
-  profile: RelayProfile;
-  form: BackendSettings;
-  isNew?: boolean;
-  onProfileChange: (value: RelayProfile) => void;
-  onSwitch: () => void;
-  actions: Actions;
-}) {
-  const showApiFields = profile.relayMode !== "official" || profile.officialMixApiKey;
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const updateDraft = (patch: Partial<RelayProfile>) => {
-    onProfileChange(applyRelayProfilePatchToFiles(profile, patch));
-  };
-  return (
-    <div className="relay-profile-editor">
-      <div className="relay-editor-head">
-        <div>
-          <strong>{profile.name || "未命名供应商"}</strong>
-          <span>{relayProfileEditorStatus(profile, form, isNew)}</span>
-        </div>
-        {isNew ? null : (
-          <Button
-            disabled={!form.relayProfilesEnabled}
-            onClick={onSwitch}
-            title={!form.relayProfilesEnabled ? "供应商配置总开关已关闭" : undefined}
-            variant={profile.id === form.activeRelayId ? "secondary" : "default"}
-          >
-            {profile.id === form.activeRelayId ? "使用中" : "设为当前"}
-          </Button>
-        )}
-      </div>
-      <div className="relay-fields">
-        <Field className="relay-field-name" label="名称">
-          <Input
-            value={profile.name}
-            onChange={(event) => updateDraft({ name: event.currentTarget.value })}
-          />
-        </Field>
-        <Field className="relay-field-mode" label="接入模式">
-          <select
-            className="field-select"
-            value={profile.relayMode}
-            onChange={(event) => {
-              const relayMode = event.currentTarget.value as RelayMode;
-              updateDraft(relayMode === "official" ? { relayMode, officialMixApiKey: false } : { relayMode });
-            }}
-          >
-            <option value="official">官方登录</option>
-            <option value="pureApi">纯 API</option>
-          </select>
-        </Field>
-        <Field className="relay-field-config-model" label="配置模型">
-          <Input
-            value={profile.model}
-            onChange={(event) => updateDraft({ model: event.currentTarget.value })}
-            placeholder="写入 config.toml 的 model 字段，例如 gpt-5"
-          />
-        </Field>
-        <Field className="relay-field-goals" label="Codex 目标">
-          <label className="inline-check">
-            <input
-              checked={configHasCodexGoalsFeature(profile.configContents)}
-              onChange={(event) =>
-                updateDraft({
-                  configContents: setCodexGoalsFeatureInConfig(profile.configContents, event.currentTarget.checked),
-                })
-              }
-              type="checkbox"
-            />
-            <span>启用目标功能</span>
-          </label>
-        </Field>
-        <div className="relay-advanced-toggle">
-          <Button
-            aria-expanded={showAdvanced}
-            onClick={() => setShowAdvanced((current) => !current)}
-            size="sm"
-            type="button"
-            variant="secondary"
-          >
-            <Settings className="h-4 w-4" />
-            更多选项
-          </Button>
-        </div>
-        {showAdvanced ? (
-          <div className="relay-advanced-fields">
-            <Field className="relay-field-test-model" label="测试模型">
-              <Input
-                value={profile.testModel}
-                onChange={(event) => updateDraft({ testModel: event.currentTarget.value })}
-                placeholder={`留空使用默认：${form.relayTestModel || defaultSettings.relayTestModel}`}
-              />
-            </Field>
-            <Field className="relay-field-context-window" label="上下文大小">
-              <Input
-                inputMode="numeric"
-                value={profile.contextWindow}
-                onChange={(event) => updateDraft({ contextWindow: event.currentTarget.value.replace(/[^\d]/g, "") })}
-                placeholder="留空不改写，例如 200000"
-              />
-            </Field>
-            <Field className="relay-field-auto-compact" label="压缩上下文大小">
-              <Input
-                inputMode="numeric"
-                value={profile.autoCompactLimit}
-                onChange={(event) => updateDraft({ autoCompactLimit: event.currentTarget.value.replace(/[^\d]/g, "") })}
-                placeholder="留空不改写，例如 160000"
-              />
-            </Field>
-          </div>
-        ) : null}
-        {profile.relayMode === "official" ? (
-          <Field className="relay-field-official-key" label="API Key">
-            <label className="inline-check">
-              <input
-                checked={profile.officialMixApiKey}
-                onChange={(event) => updateDraft({ officialMixApiKey: event.currentTarget.checked })}
-                type="checkbox"
-              />
-              <span>混入 API KEY</span>
-            </label>
-          </Field>
-        ) : null}
-        {showApiFields ? (
-          <div className="relay-api-fields">
-            <Field className="relay-field-base-url" label="Base URL">
-              <Input
-                value={profile.baseUrl}
-                onChange={(event) => updateDraft({ baseUrl: event.currentTarget.value })}
-                placeholder="填写中转服务 Base URL"
-              />
-            </Field>
-            <Field className="relay-field-key" label="Key">
-              <Input
-                type="password"
-                value={profile.apiKey}
-                onChange={(event) => updateDraft({ apiKey: event.currentTarget.value })}
-                placeholder="输入中转服务的 API Key"
-              />
-            </Field>
-            <Field className="relay-field-protocol" label="上游协议">
-              <div className="protocol-options">
-                <button
-                  className={`protocol-option ${profile.protocol === "responses" ? "active" : ""}`}
-                  onClick={() => updateDraft({ protocol: "responses" })}
-                  type="button"
-                >
-                  Responses API
-                </button>
-                <button
-                  className={`protocol-option ${profile.protocol === "chatCompletions" ? "active" : ""}`}
-                  onClick={() => updateDraft({ protocol: "chatCompletions" })}
-                  type="button"
-                >
-                  Chat Completions
-                </button>
-              </div>
-            </Field>
-          </div>
-        ) : null}
-        {showApiFields ? (
-          <Field className="relay-field-model-list" label="模型列表">
-            <div className="relay-model-list-tools">
-              <Textarea
-                value={profile.modelList}
-                onChange={(event) => updateDraft({ modelList: event.currentTarget.value })}
-                placeholder="每行一个模型，例如 qwen3-coder"
-              />
-              <Button
-                onClick={async () => {
-                  const models = await actions.fetchRelayProfileModels(profile);
-                  if (models?.length) updateDraft({ modelList: models.join("\n") });
-                }}
-                size="sm"
-                type="button"
-                variant="secondary"
-              >
-                <Download className="h-4 w-4" />
-                从上游获取
-              </Button>
-            </div>
-          </Field>
-        ) : null}
-        {showApiFields ? (
-          <Field className="relay-field-user-agent" label="User-Agent">
-            <Input
-              value={profile.userAgent}
-              onChange={(event) => updateDraft({ userAgent: event.currentTarget.value })}
-              placeholder="留空使用默认值"
-            />
-          </Field>
-        ) : null}
-      </div>
-      {showApiFields && profile.protocol === "chatCompletions" ? (
-        <div className="hint-line relay-protocol-hint">
-          <MessageCircle className="h-4 w-4" />
-          <span>此上游会通过本地 127.0.0.1:57321 转成 Responses API，需要从 Codex++ 启动 Codex。</span>
-        </div>
-      ) : null}
-      <div className="hint-line relay-protocol-hint">
-        <ShieldCheck className="h-4 w-4" />
-        <span>{relayProfileModeHelp(profile)}</span>
-      </div>
-      {profile.linkedCcsProviderId ? (
-        <div className="hint-line relay-protocol-hint">
-          <Link2 className="h-4 w-4" />
-          <span>
-            此供应商联动自 cc-switch：{profile.linkedCcsProviderId}。开启“保存时回写 cc-switch”后，本页保存会同步修改 cc-switch 数据库中的同一供应商。
-          </span>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function RelayContextManager({
+function ContextManager({
   form,
   liveEntries,
-  relayFiles,
   onFormChange,
   actions,
 }: {
   form: BackendSettings;
   liveEntries: CodexContextEntries | null;
-  relayFiles: RelayFilesResult | null;
   onFormChange: (value: BackendSettings) => void;
   actions: Actions;
 }) {
@@ -2872,7 +1686,7 @@ function RelayContextManager({
     onFormChange(next);
     const syncResult = await actions.syncLiveContextEntries(next, true);
     if (syncResult && isSuccessStatus(syncResult.status)) {
-      void actions.refreshRelayFiles();
+      // context entries synced
     }
   };
 
@@ -2883,13 +1697,13 @@ function RelayContextManager({
   };
 
   return (
-    <div className="relay-context-panel">
-      <div className="relay-context-head">
+    <div className="context-panel">
+      <div className="context-head">
         <div>
           <strong>Codex 工具与插件</strong>
           <span>MCP、Skills、Plugins 作为全局配置独立管理，切换任意供应商都会合并。</span>
         </div>
-        <div className="relay-context-head-actions">
+        <div className="context-head-actions">
           <Button onClick={() => setEditor({ kind: activeKind })} size="sm" variant="secondary">
             <Plus className="h-4 w-4" />
             新增{label}
@@ -2909,15 +1723,15 @@ function RelayContextManager({
           </button>
         ))}
       </div>
-      <div className="relay-context-summary">
+      <div className="context-summary">
         当前共有 {visibleEntries.length} 个{label}；这些条目独立于供应商保存，会写入所有供应商切换后的 config.toml。
       </div>
-      <div className="relay-context-list">
+      <div className="context-list">
         {visibleEntries.length ? (
           visibleEntries.map((entry) => (
-            <div className="relay-context-row" key={`${entry.kind}-${entry.id}`}>
+            <div className="context-row" key={`${entry.kind}-${entry.id}`}>
               <strong className="context-title">{entry.title || entry.id}</strong>
-              <div className="relay-context-actions">
+              <div className="context-actions">
                 <button
                   aria-checked={entry.enabled}
                   aria-label={`contextEnabledSwitch-${entry.kind}-${entry.id}`}
@@ -2935,7 +1749,7 @@ function RelayContextManager({
                   <Edit3 className="h-4 w-4" />
                 </Button>
                 <Button
-                  className="relay-context-delete"
+                  className="context-delete"
                   onClick={() => void deleteEntry(entry)}
                   size="icon"
                   title="删除扩展项"
@@ -3063,135 +1877,6 @@ function SyncedTextarea({
   );
 }
 
-function RelayFileEditors({
-  contextProfile,
-  profile,
-  form,
-  isActive,
-  profileId,
-  onFormChange,
-  onProfileChange,
-  actions,
-}: {
-  contextProfile: RelayProfile;
-  profile: RelayProfile;
-  form: BackendSettings;
-  isActive: boolean;
-  profileId: string;
-  onFormChange: (value: BackendSettings) => void;
-  onProfileChange: (value: RelayProfile) => void;
-  actions: Actions;
-}) {
-  const configPreview = effectiveRelayConfigPreview(profile, form, contextProfile);
-  const entries = contextEntriesForProfile(form, contextProfile);
-  return (
-    <div className="relay-file-grid">
-      <div className="relay-file-panel">
-        <div className="relay-file-head">
-          <div>
-            <strong>config.toml 预览</strong>
-            <span>{isActive ? "当前供应商切换后会写入的预览；上下文开关变化会立即反映" : "切换到此供应商时会写入的预览；上下文开关变化会立即反映"}</span>
-          </div>
-        </div>
-        <SyncedTextarea
-          className="relay-file-textarea"
-          value={configPreview}
-          onValueChange={(value) => {
-            const withoutCommon = stripCommonConfigTextFallback(
-              value,
-              relayCombinedCommonConfig(form),
-            );
-            const configContents = stripContextEntriesFromConfig(withoutCommon, entries);
-            onProfileChange(deriveRelayProfileFromFiles({
-              ...profile,
-              configContents,
-            }));
-          }}
-        />
-      </div>
-      <div className="relay-file-panel">
-        <div className="relay-file-head">
-          <div>
-            <strong>通用配置文件</strong>
-            <span>只保留非 MCP、Skills、Plugins 的跨供应商配置；工具与插件在独立页面管理。</span>
-          </div>
-          <Button
-            onClick={async () => {
-              const extracted = await actions.extractRelayCommonConfig(profile.configContents || "");
-              if (!extracted) return;
-              const split = splitContextConfigText(extracted.commonConfigContents || "");
-              if (!split.common.trim() && !split.context.trim()) {
-                await actions.showMessage("通用配置文件", "当前供应商 config.toml 里没有可提取的通用配置。", "failed");
-                return;
-              }
-              const promotedProfile = {
-                ...profile,
-                configContents: extracted.profileConfigContents,
-              };
-              const next = syncLegacyRelayFields({
-                ...form,
-                relayCommonConfigContents: split.common,
-                relayContextConfigContents: joinTomlSectionsRootFirst([form.relayContextConfigContents || "", split.context]),
-                relayProfiles: form.relayProfiles.map((item) => (item.id === profileId ? promotedProfile : item)),
-              });
-              onFormChange(next);
-              onProfileChange(promotedProfile);
-              await actions.saveSettingsValue(next, false);
-            }}
-            size="sm"
-            type="button"
-            variant="secondary"
-          >
-            <Download className="h-4 w-4" />
-            提取当前供应商配置
-          </Button>
-        </div>
-        <SyncedTextarea
-          className="relay-file-textarea"
-          value={form.relayCommonConfigContents}
-          onValueChange={(value) => onFormChange({ ...form, relayCommonConfigContents: value })}
-        />
-      </div>
-      <div className="relay-file-panel">
-        <div className="relay-file-head">
-          <div>
-            <strong>auth.json</strong>
-            <span>{isActive ? "当前使用中：打开时从 ~/.codex/auth.json 回填，保存后会作为此供应商 auth 存档" : "切换到此供应商时会写入 ~/.codex/auth.json"}</span>
-          </div>
-        </div>
-        <SyncedTextarea
-          className="relay-file-textarea"
-          value={profile.authContents}
-          onValueChange={(value) => onProfileChange(deriveRelayProfileFromFiles({ ...profile, authContents: value }))}
-        />
-      </div>
-    </div>
-  );
-}
-
-function ModeSelector({ launchMode, actions }: { launchMode: LaunchMode; actions: Actions }) {
-  return (
-    <div className="mode-grid">
-      <button
-        className={`mode-option ${launchMode === "relay" ? "active" : ""}`}
-        onClick={() => void actions.setLaunchMode("relay")}
-        type="button"
-      >
-        <strong>兼容增强</strong>
-        <span>适合官方登录或官方混入 API Key；保留会话删除、导出、项目移动、Timeline 和用户脚本，关闭插件入口相关增强。</span>
-      </button>
-      <button
-        className={`mode-option ${launchMode === "patch" ? "active" : ""}`}
-        onClick={() => void actions.setLaunchMode("patch")}
-        type="button"
-      >
-        <strong>完整增强</strong>
-        <span>适合纯 API；启用插件入口、强制安装、会话删除导出、项目移动等全部页面能力。</span>
-      </button>
-    </div>
-  );
-}
-
 function FeatureItem({ title, detail, enabled }: { title: string; detail: string; enabled: boolean }) {
   return (
     <div className="feature-item">
@@ -3316,6 +2001,30 @@ function StatusRow({ title, status = "unknown", path }: { title: string; status?
   );
 }
 
+function statusLabel(status: string) {
+  const labels: Record<string, string> = {
+    found: "已找到",
+    missing: "缺失",
+    installed: "已安装",
+    ok: "正常",
+    running: "运行中",
+    failed: "失败",
+    archived: "已归档",
+    accepted: "已受理",
+    not_checked: "未检查",
+    not_implemented: "未实现",
+    disabled: "已禁用",
+    unknown: "未知",
+  };
+  return labels[status] ?? status;
+}
+
+function statusClass(status: string) {
+  if (["found", "installed", "ok", "running"].includes(status)) return "good";
+  if (["failed", "missing"].includes(status)) return "bad";
+  return "warn";
+}
+
 function Badge({ status }: { status: string }) {
   return <UiBadge className={statusClass(status)} variant="secondary">{statusLabel(status)}</UiBadge>;
 }
@@ -3367,39 +2076,6 @@ function ScriptRow({ script, actions }: { script: NonNullable<UserScriptInventor
   );
 }
 
-function AdGrid({ ads, empty, actions }: { ads: AdItem[]; empty: string; actions: Actions }) {
-  if (!ads.length) return <div className="empty">{empty}</div>;
-  return (
-    <div className="ad-grid">
-      {ads.map((ad) => (
-        <button className="ad-card" key={ad.id || `${ad.type}-${ad.title}`} onClick={() => void actions.openExternalUrl(ad.url)} type="button">
-          <div>
-            <strong>{ad.title}</strong>
-            <p>{ad.description}</p>
-          </div>
-          {ad.highlights?.length ? (
-            <div className="ad-tags">
-              {ad.highlights.map((item) => (
-                <span key={item}>{item}</span>
-              ))}
-            </div>
-          ) : null}
-          <span className="ad-link">
-            打开
-            <ExternalLink className="h-4 w-4" />
-          </span>
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function isExpiredAd(ad: AdItem) {
-  if (!ad.expires_at) return false;
-  const expiresAt = Date.parse(ad.expires_at);
-  return Number.isFinite(expiresAt) && expiresAt < Date.now();
-}
-
 function routeTitle(route: Route) {
   return routes.find((item) => item.id === route)?.label ?? "概览";
 }
@@ -3407,12 +2083,10 @@ function routeTitle(route: Route) {
 function routeSubtitle(route: Route) {
   const subtitles: Record<Route, string> = {
     overview: "检查问题、启动与快速修复",
-    relay: "管理 API 供应商、协议、Key 与配置文件",
     sessions: "查看、删除和修复 Codex 本地会话",
     context: "独立管理 MCP、Skills、Plugins",
     enhance: "会话删除、导出、项目移动和脚本能力",
     userScripts: "内置和用户自定义脚本清单",
-    recommendations: "赞助商推荐与普通推荐",
     maintenance: "入口安装、修复、Watcher 与手动启动",
     about: "版本信息、项目链接、GitHub Release 更新、日志与诊断",
     settings: "主题、命令包装器和启动参数",
@@ -3430,12 +2104,11 @@ function contextKindLabel(kind: ContextKind) {
   return contextKindOptions.find((option) => option.kind === kind)?.label ?? "扩展项";
 }
 
-function contextEntriesFromSettings(settings: BackendSettings): CodexContextEntries {
-  const commonConfig = normalizeDuplicateTomlTables(settings.relayContextConfigContents || "");
+function contextEntriesFromSettings(_settings: BackendSettings): CodexContextEntries {
   return {
-    mcpServers: parseContextEntries(commonConfig, "mcp", "mcp_servers"),
-    skills: parseContextEntries(commonConfig, "skill", "skills"),
-    plugins: parseContextEntries(commonConfig, "plugin", "plugins"),
+    mcpServers: [],
+    skills: [],
+    plugins: [],
   };
 }
 
@@ -3469,10 +2142,6 @@ function mergeLiveContextEntries(entries: CodexContextEntry[], liveEntries: Map<
 
 function withLiveEntryState(entry: CodexContextEntry, live?: CodexContextEntry): CodexContextEntry {
   return live ? { ...entry, enabled: live.enabled } : { ...entry, enabled: false };
-}
-
-function contextEntriesForProfile(settings: BackendSettings, _profile: RelayProfile): CodexContextEntries {
-  return contextEntriesFromSettings(settings);
 }
 
 function contextEntriesFromConfig(configContents: string): CodexContextEntries {
@@ -3654,13 +2323,6 @@ function setCodexGoalsFeatureInConfig(configContents: string, enabled: boolean):
   return ensureTrailingNewline(next.join("\n").trimEnd());
 }
 
-function effectiveRelayConfigPreview(profile: RelayProfile, settings: BackendSettings, contextProfile = profile): string {
-  const entries = contextEntriesForProfile(settings, contextProfile);
-  const isolatedConfig = stripContextEntriesFromConfig(profile.configContents, entries);
-  const configWithLimits = applyContextLimitPreview(isolatedConfig, profile);
-  return joinTomlSectionsRootFirst([configWithLimits, settings.relayCommonConfigContents || "", selectedContextConfigToml(entries)]);
-}
-
 function selectedContextConfigToml(entries: CodexContextEntries): string {
   const sections: string[] = [];
   for (const option of contextKindOptions) {
@@ -3686,10 +2348,6 @@ function syncLiveConfigContextState(liveConfigContents: string, settings: Backen
   const entries = contextEntriesFromSettings(settings);
   const withoutContext = stripAllContextEntriesFromConfig(liveConfigContents);
   return joinTomlSectionsRootFirst([withoutContext, selectedContextConfigToml(entries)]);
-}
-
-function relayCombinedCommonConfig(settings: BackendSettings): string {
-  return joinTomlSectionsRootFirst([settings.relayCommonConfigContents || "", settings.relayContextConfigContents || ""]);
 }
 
 function splitContextConfigText(configContents: string): { common: string; context: string } {
@@ -3801,34 +2459,6 @@ function contextHeaderFromLine(line: string): { kind: ContextKind; id: string } 
   return null;
 }
 
-function applyContextLimitPreview(configContents: string, profile: RelayProfile): string {
-  const replacements: Array<[string, string]> = [
-    ["model_context_window", profile.contextWindow],
-    ["model_auto_compact_token_limit", profile.autoCompactLimit],
-  ];
-  let lines = configContents.split(/\r?\n/);
-
-  for (const [key, value] of replacements) {
-    const trimmed = value.trim();
-    if (!trimmed) continue;
-    let replaced = false;
-    lines = lines.map((line) => {
-      if (!replaced && new RegExp(`^\\s*${key}\\s*=`).test(line)) {
-        replaced = true;
-        return `${key} = ${trimmed}`;
-      }
-      return line;
-    });
-    if (!replaced) {
-      const firstTable = lines.findIndex((line) => /^\s*\[[^\]]+\]\s*$/.test(line));
-      const insertAt = firstTable >= 0 ? firstTable : lines.length;
-      lines.splice(insertAt, 0, `${key} = ${trimmed}`);
-    }
-  }
-
-  return ensureTrailingNewline(lines.join("\n").trimEnd());
-}
-
 function removeRootTomlKey(contents: string, key: string): string {
   const lines: string[] = [];
   let inRoot = true;
@@ -3916,90 +2546,6 @@ function tomlKey(key: string): string {
   return /^[A-Za-z0-9_-]+$/.test(key) ? key : `"${tomlString(key)}"`;
 }
 
-function contextSelectionIds(selection: RelayContextSelection, kind: ContextKind): string[] {
-  if (kind === "mcp") return selection.mcpServers;
-  if (kind === "skill") return selection.skills;
-  return selection.plugins;
-}
-
-function setContextSelectionId(selection: RelayContextSelection, kind: ContextKind, id: string, checked: boolean): RelayContextSelection {
-  const next = {
-    mcpServers: [...selection.mcpServers],
-    skills: [...selection.skills],
-    plugins: [...selection.plugins],
-  };
-  const list = contextSelectionIds(next, kind);
-  const normalizedId = id.trim();
-  const exists = list.includes(normalizedId);
-  if (checked && normalizedId && !exists) list.push(normalizedId);
-  if (!checked && exists) list.splice(list.indexOf(normalizedId), 1);
-  return next;
-}
-
-function removeContextSelectionFromSettings(settings: BackendSettings, kind: ContextKind, id: string): BackendSettings {
-  return {
-    ...settings,
-    relayProfiles: settings.relayProfiles.map((profile) => ({
-      ...profile,
-      contextSelection: setContextSelectionId(profile.contextSelection, kind, id, false),
-    })),
-  };
-}
-
-function contextSelectionForAllEntries(settings: BackendSettings): RelayContextSelection {
-  const entries = contextEntriesFromSettings(settings);
-  return {
-    mcpServers: entries.mcpServers.map((entry) => entry.id),
-    skills: entries.skills.map((entry) => entry.id),
-    plugins: entries.plugins.map((entry) => entry.id),
-  };
-}
-
-function relayProfileSourceLabel(profile: RelayProfile) {
-  return profile.linkedCcsProviderId ? "cc-switch 联动" : "本地";
-}
-
-function relayProfileEditorStatus(profile: RelayProfile, form: BackendSettings, isNew: boolean) {
-  if (isNew) return "新建供应商需要先保存到列表";
-  if (!form.relayProfilesEnabled) return "供应商配置总开关已关闭；当前只保存配置，不写入 Codex live 文件";
-  if (profile.linkedCcsProviderId && form.ccsLinkEnabled) return "联动 cc-switch；保存后会回写外部供应商数据库";
-  if (profile.linkedCcsProviderId) return "联动 cc-switch；当前未开启保存回写";
-  return profile.id === form.activeRelayId ? "当前正在使用" : "编辑后保存列表，再切换模式时会使用新配置";
-}
-
-function providerInitial(name: string) {
-  const trimmed = (name || "供应商").trim();
-  return Array.from(trimmed)[0]?.toUpperCase() || "供";
-}
-
-function statusLabel(status: string) {
-  const labels: Record<string, string> = {
-    found: "已找到",
-    missing: "缺失",
-    installed: "已安装",
-    ok: "正常",
-    running: "运行中",
-    failed: "失败",
-    archived: "已归档",
-    accepted: "已受理",
-    not_checked: "未检查",
-    not_implemented: "未实现",
-    disabled: "已禁用",
-    unknown: "未知",
-  };
-  return labels[status] ?? status;
-}
-
-function statusClass(status: string) {
-  if (["found", "installed", "ok", "running"].includes(status)) return "good";
-  if (["failed", "missing"].includes(status)) return "bad";
-  return "warn";
-}
-
-function isSuccessStatus(status?: Status) {
-  return status === "ok" || status === "accepted";
-}
-
 function healthItems(overview: OverviewResult | null) {
   return [
     {
@@ -4023,58 +2569,20 @@ function healthItems(overview: OverviewResult | null) {
   ];
 }
 
+function isSuccessStatus(status?: Status) {
+  return status === "ok" || status === "accepted";
+}
+
+function tomlString(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
 function normalizeSettings(settings: BackendSettings): BackendSettings {
-  const splitCommon = splitContextConfigText(settings.relayCommonConfigContents || "");
-  const relayCommonConfigContents = splitCommon.common;
-  const relayContextConfigContents = joinTomlSectionsRootFirst([
-    settings.relayContextConfigContents || "",
-    splitCommon.context,
-  ]);
-  const defaultContextSelection = contextSelectionForAllEntries({
-    ...settings,
-    relayCommonConfigContents,
-    relayContextConfigContents,
-  });
-  const profiles =
-    settings.relayProfiles?.length
-      ? settings.relayProfiles.map((profile) => normalizeRelayProfile(profile, defaultContextSelection))
-      : [
-          {
-            id: settings.activeRelayId || "default",
-            linkedCcsProviderId: "",
-            name: "默认中转",
-            model: "",
-            baseUrl: settings.relayBaseUrl || defaultSettings.relayBaseUrl,
-            upstreamBaseUrl: settings.relayBaseUrl || defaultSettings.relayBaseUrl,
-            apiKey: settings.relayApiKey || "",
-            protocol: "responses" as RelayProtocol,
-            relayMode: "official" as RelayMode,
-            officialMixApiKey: false,
-            testModel: "",
-            configContents: "",
-            authContents: "",
-            useCommonConfig: true,
-            contextSelection: defaultContextSelection,
-            contextSelectionInitialized: true,
-            contextWindow: "",
-            autoCompactLimit: "",
-            modelList: "",
-            userAgent: "",
-          },
-        ];
-  const activeRelayId = profiles.some((profile) => profile.id === settings.activeRelayId)
-    ? settings.activeRelayId
-    : profiles[0]?.id || "default";
-  return syncLegacyRelayFields({
+  return {
     ...defaultSettings,
     ...settings,
-    relayProfilesEnabled: settings.relayProfilesEnabled !== false,
     ccsLinkEnabled: settings.ccsLinkEnabled === true,
-    relayCommonConfigContents,
-    relayContextConfigContents,
-    relayProfiles: profiles,
-    activeRelayId,
-  });
+  };
 }
 
 function codexExtraArgsToInput(args: string[] | undefined) {
@@ -4083,613 +2591,6 @@ function codexExtraArgsToInput(args: string[] | undefined) {
 
 function inputToCodexExtraArgs(value: string) {
   return value === "" ? [] : value.split(/\r?\n/);
-}
-
-function normalizeRelayProfile(profile: RelayProfile, defaultContextSelection = emptyContextSelection()): RelayProfile {
-  const legacyMixedApi = profile.relayMode === "mixedApi";
-  let normalized: RelayProfile = {
-    ...profile,
-    linkedCcsProviderId: profile.linkedCcsProviderId || "",
-    model: profile.model || "",
-    baseUrl: profile.baseUrl || defaultSettings.relayBaseUrl,
-    upstreamBaseUrl: profile.upstreamBaseUrl || profile.baseUrl || "",
-    apiKey: profile.apiKey || "",
-    protocol: profile.protocol === "chatCompletions" ? "chatCompletions" : "responses",
-    relayMode: normalizeRelayMode(profile.relayMode),
-    officialMixApiKey: profile.officialMixApiKey === true || legacyMixedApi,
-    testModel: profile.testModel || "",
-    configContents: profile.configContents || "",
-    authContents: profile.authContents || "",
-    useCommonConfig: profile.useCommonConfig !== false,
-    contextSelection: profile.contextSelectionInitialized
-      ? normalizeContextSelection(profile.contextSelection)
-      : normalizeContextSelection(undefined, defaultContextSelection),
-    contextSelectionInitialized: true,
-    contextWindow: profile.contextWindow || "",
-    autoCompactLimit: profile.autoCompactLimit || "",
-    modelList: profile.modelList || "",
-    userAgent: profile.userAgent || "",
-  };
-  if (!normalized.configContents.trim() || !normalized.authContents.trim()) {
-    normalized = withGeneratedRelayFiles(normalized);
-  }
-  return deriveRelayProfileFromFiles(normalized);
-}
-
-function activeRelayProfile(settings: BackendSettings): RelayProfile {
-  return (
-    settings.relayProfiles.find((profile) => profile.id === settings.activeRelayId) ||
-    settings.relayProfiles[0] ||
-    defaultSettings.relayProfiles[0]
-  );
-}
-
-function relayProtocolLabel(protocol: RelayProtocol): string {
-  return protocol === "chatCompletions" ? "Chat Completions 转 Responses" : "Responses API";
-}
-
-function normalizeRelayMode(mode: RelayMode | undefined): RelayMode {
-  if (mode === "pureApi") return mode;
-  return "official";
-}
-
-function normalizeContextSelection(
-  selection?: Partial<RelayContextSelection>,
-  fallback: RelayContextSelection = emptyContextSelection(),
-): RelayContextSelection {
-  if (!selection) {
-    return {
-      mcpServers: [...fallback.mcpServers],
-      skills: [...fallback.skills],
-      plugins: [...fallback.plugins],
-    };
-  }
-  return {
-    mcpServers: Array.isArray(selection?.mcpServers) ? selection.mcpServers.map(String) : [],
-    skills: Array.isArray(selection?.skills) ? selection.skills.map(String) : [],
-    plugins: Array.isArray(selection?.plugins) ? selection.plugins.map(String) : [],
-  };
-}
-
-function relayModeLabel(mode: RelayMode): string {
-  if (mode === "pureApi") return "纯 API";
-  return "官方登录";
-}
-
-function relayProfileConfigBrief(profile: RelayProfile): string {
-  if (profile.relayMode === "official") return profile.officialMixApiKey ? "混入 API Key" : "不写 API 文件";
-  return profile.baseUrl || "未填写 URL";
-}
-
-function relayProfileModeHelp(profile: RelayProfile): string {
-  if (profile.relayMode === "official") {
-    if (profile.officialMixApiKey) {
-      return "此供应商会保留官方登录模式，并把请求混入当前 API Key；页面增强仍使用兼容模式。";
-    }
-    return "此供应商会切回官方登录模式，使用 ChatGPT 官方账号，不写入 API Key。";
-  }
-  if (profile.relayMode === "pureApi") {
-    return "此供应商会同时写入 config.toml 和 auth.json；API Key 也会注入到 provider bearer token。";
-  }
-  return "此供应商会保留官方登录模式，并把请求混入当前 API Key；页面增强仍使用兼容模式。";
-}
-
-function relayProfileReadinessText(profile: RelayProfile, relay: RelayResult | null): string {
-  if (profile.relayMode === "official") {
-    if (profile.officialMixApiKey) {
-      const hasApiFields = profile.baseUrl.trim() && profile.apiKey.trim();
-      if (!relay?.authenticated && !hasApiFields) return "当前未登录官方账号，也未配置混入 API 的 Base URL / Key。";
-      if (!relay?.authenticated) return "当前未登录官方账号；官方登录混入 API Key 需要先登录官方账号。";
-      if (!hasApiFields) return "当前还没有填写混入 API 的 Base URL / Key。";
-      return `官方登录已就绪：${relay.accountLabel || "已登录"}，会混入当前 API Key。`;
-    }
-    return relay?.authenticated
-      ? `官方账号已登录：${relay.accountLabel || relay.authSource || "已检测"}。`
-      : "当前未登录官方账号；切到官方登录模式后仍需要先在 Codex/ChatGPT 登录。";
-  }
-  const hasFiles = profile.configContents.trim() && profile.authContents.trim();
-  if (!hasFiles) return "当前供应商还没有完整 config.toml / API Key 存档。";
-  if (relay && !relay.configured) return "纯 API 配置未完整写入：请检查此供应商是否有 OPENAI_API_KEY，且 config.toml 是否包含 model_provider / provider / base_url。";
-  return "纯 API 就绪：会同时写入 config.toml 和 auth.json。";
-}
-
-function relayProfileSwitchCommand(profile: RelayProfile): "clear_relay_injection" | "apply_relay_injection" | "apply_pure_api_injection" {
-  if (profile.relayMode === "pureApi") return "apply_pure_api_injection";
-  if (profile.relayMode === "official" && !profile.officialMixApiKey) return "clear_relay_injection";
-  if (profile.configContents.trim()) return "apply_relay_injection";
-  return profile.officialMixApiKey ? "apply_relay_injection" : "clear_relay_injection";
-}
-
-function relayProfileModeSwitchedText(profile: RelayProfile): string {
-  if (profile.relayMode === "pureApi") return "已按此供应商切换到纯 API；页面增强已设为完整增强。";
-  if (profile.officialMixApiKey) return "已按此供应商使用官方登录，并混入 API Key；页面增强已设为兼容增强。";
-  return "已按此供应商切回官方登录；页面增强已设为兼容增强。";
-}
-
-function withGeneratedRelayFiles(profile: RelayProfile): RelayProfile {
-  if (profile.relayMode === "official") {
-    return {
-      ...profile,
-      configContents: profile.officialMixApiKey ? buildRelayConfigToml(profile, { includeBearerToken: true }) : "",
-      authContents: profile.authContents || "",
-    };
-  }
-  return {
-    ...profile,
-    configContents: buildRelayConfigToml(profile, { includeBearerToken: false }),
-    authContents: buildRelayAuthJson(profile),
-  };
-}
-
-function buildRelayConfigToml(
-  profile: Pick<RelayProfile, "model" | "baseUrl" | "upstreamBaseUrl" | "apiKey" | "protocol">,
-  options: { includeBearerToken: boolean },
-): string {
-  const baseUrl = profile.protocol === "chatCompletions" ? PROTOCOL_PROXY_BASE_URL : profile.baseUrl.trim();
-  const apiKey = profile.apiKey.trim();
-  const rootLines = [
-    profile.model.trim() ? `model = "${tomlString(profile.model.trim())}"` : null,
-    'model_provider = "custom"',
-    "",
-  ].filter((line): line is string => line !== null);
-  return [
-    ...rootLines,
-    "[model_providers.custom]",
-    'name = "custom"',
-    'wire_api = "responses"',
-    "requires_openai_auth = true",
-    `base_url = "${tomlString(baseUrl)}"`,
-    options.includeBearerToken ? `experimental_bearer_token = "${tomlString(apiKey)}"` : null,
-    "",
-  ].filter((line): line is string => line !== null).join("\n");
-}
-
-function buildRelayAuthJson(profile: Pick<RelayProfile, "apiKey">): string {
-  return `${JSON.stringify({ OPENAI_API_KEY: profile.apiKey.trim() }, null, 2)}\n`;
-}
-
-function buildOfficialRelayAuthJson(contents: string): string {
-  const trimmed = contents.trim();
-  if (!trimmed) return "";
-  try {
-    const parsed = JSON.parse(trimmed) as Record<string, unknown>;
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return "";
-    delete parsed.OPENAI_API_KEY;
-    return `${JSON.stringify(parsed, null, 2)}\n`;
-  } catch {
-    return "";
-  }
-}
-
-function deriveRelayProfileFromFiles(profile: RelayProfile): RelayProfile {
-  const configContents = profile.configContents || "";
-  const authContents = profile.relayMode === "official" ? buildOfficialRelayAuthJson(profile.authContents || "") : profile.authContents || "";
-  const configBaseUrl = codexBaseUrlFromConfig(configContents);
-  const chatUpstreamBaseUrl = rootTomlStringValue(configContents, CHAT_UPSTREAM_BASE_URL_KEY);
-  const isProxyConfig = configBaseUrl === PROTOCOL_PROXY_BASE_URL;
-  const upstreamBaseUrl = profile.upstreamBaseUrl || chatUpstreamBaseUrl || (configBaseUrl && !isProxyConfig ? configBaseUrl : profile.baseUrl || "");
-  const configApiKey = codexExperimentalBearerTokenFromConfig(configContents);
-  return {
-    ...profile,
-    model: codexModelFromConfig(configContents),
-    baseUrl: upstreamBaseUrl,
-    upstreamBaseUrl,
-    apiKey: profile.relayMode === "official"
-      ? configApiKey || profile.apiKey || ""
-      : codexApiKeyFromAuth(authContents) || configApiKey || "",
-    contextWindow: codexTopLevelIntFromConfig(configContents, "model_context_window"),
-    autoCompactLimit: codexTopLevelIntFromConfig(configContents, "model_auto_compact_token_limit"),
-    configContents,
-    authContents,
-  };
-}
-
-function applyRelayProfilePatchToFiles(profile: RelayProfile, patch: Partial<RelayProfile>): RelayProfile {
-  let next: RelayProfile = { ...profile, ...patch };
-  const shouldHaveFiles =
-    next.relayMode !== "official" || next.officialMixApiKey || next.configContents.trim() || next.authContents.trim();
-  const needsAuthFile = next.relayMode === "pureApi";
-  if (shouldHaveFiles && (!next.configContents.trim() || (needsAuthFile && !next.authContents.trim()))) {
-    next = withGeneratedRelayFiles(next);
-  }
-
-  if ("model" in patch) {
-    next.configContents = setRootTomlStringKey(next.configContents, "model", patch.model || "");
-  }
-  if ("apiKey" in patch) {
-    if (next.relayMode === "pureApi") {
-      next.authContents = setAuthOpenAiApiKey(next.authContents, patch.apiKey || "");
-      next.configContents = removeCodexExperimentalBearerToken(next.configContents);
-    } else {
-      next.configContents = setCodexExperimentalBearerToken(next.configContents, patch.apiKey || "");
-    }
-  }
-  if ("baseUrl" in patch) {
-    next.upstreamBaseUrl = patch.baseUrl || "";
-  }
-  if ("upstreamBaseUrl" in patch) {
-    next.baseUrl = patch.upstreamBaseUrl || "";
-  }
-  if ("baseUrl" in patch || "upstreamBaseUrl" in patch || "protocol" in patch) {
-    const baseUrlForConfig = next.protocol === "chatCompletions" ? PROTOCOL_PROXY_BASE_URL : next.upstreamBaseUrl || next.baseUrl;
-    next.configContents = setCodexProviderStringKey(next.configContents, "base_url", baseUrlForConfig);
-    next.configContents = removeRootTomlKey(next.configContents, CHAT_UPSTREAM_BASE_URL_KEY);
-  }
-  if ("contextWindow" in patch) {
-    next.configContents = setRootTomlIntKey(next.configContents, "model_context_window", patch.contextWindow || "");
-  }
-  if ("autoCompactLimit" in patch) {
-    next.configContents = setRootTomlIntKey(
-      next.configContents,
-      "model_auto_compact_token_limit",
-      patch.autoCompactLimit || "",
-    );
-  }
-  if ("relayMode" in patch || "officialMixApiKey" in patch) {
-    if (next.relayMode === "official" && !next.officialMixApiKey) {
-      next.configContents = "";
-      next.authContents = buildOfficialRelayAuthJson(next.authContents);
-    } else if (!next.configContents.trim() || (next.relayMode === "pureApi" && !next.authContents.trim())) {
-      next = withGeneratedRelayFiles(next);
-    }
-  }
-
-  return deriveRelayProfileFromFiles(next);
-}
-
-function codexModelFromConfig(contents: string): string {
-  for (const line of contents.split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-    if (trimmed.startsWith("[")) break;
-    const match = /^model\s*=\s*(["'])(.*)\1\s*$/.exec(trimmed);
-    if (match) return match[2].replace(/\\(["'\\])/g, "$1");
-  }
-  return "";
-}
-
-function codexBaseUrlFromConfig(contents: string): string {
-  return codexProviderStringFromConfig(contents, "base_url");
-}
-
-function codexExperimentalBearerTokenFromConfig(contents: string): string {
-  return codexProviderStringFromConfig(contents, "experimental_bearer_token");
-}
-
-function codexProviderStringFromConfig(contents: string, key: string): string {
-  const provider = rootTomlStringValue(contents, "model_provider");
-  const targetSection = provider ? `model_providers.${provider}` : "";
-  const lines = contents.split(/\r?\n/);
-  let currentSection = "";
-  const matches: string[] = [];
-
-  for (const line of lines) {
-    const section = tomlSectionName(line);
-    if (section !== null) {
-      currentSection = section;
-      continue;
-    }
-    const value = tomlStringAssignmentValue(line, key);
-    if (value === null) continue;
-    if (targetSection && currentSection === targetSection) return value;
-    if (!currentSection || !currentSection.startsWith("model_providers.")) matches.push(value);
-  }
-
-  return matches.length === 1 ? matches[0] : "";
-}
-
-function codexApiKeyFromAuth(contents: string): string {
-  try {
-    const parsed = JSON.parse(contents || "{}") as { OPENAI_API_KEY?: unknown };
-    return typeof parsed.OPENAI_API_KEY === "string" ? parsed.OPENAI_API_KEY : "";
-  } catch {
-    return "";
-  }
-}
-
-function codexTopLevelIntFromConfig(contents: string, key: string): string {
-  const topLevel = splitTomlRootAndTables(contents).root;
-  const pattern = new RegExp(`^\\s*${key}\\s*=\\s*(\\d+)\\s*(?:#.*)?$`);
-  for (const line of topLevel.split(/\r?\n/)) {
-    const match = pattern.exec(line);
-    if (match) return match[1];
-  }
-  return "";
-}
-
-function rootTomlStringValue(contents: string, key: string): string {
-  const topLevel = splitTomlRootAndTables(contents).root;
-  for (const line of topLevel.split(/\r?\n/)) {
-    const value = tomlStringAssignmentValue(line, key);
-    if (value !== null) return value;
-  }
-  return "";
-}
-
-function tomlSectionName(line: string): string | null {
-  const match = /^\s*\[([^\]]+)\]\s*$/.exec(line);
-  return match ? match[1].trim() : null;
-}
-
-function tomlStringAssignmentValue(line: string, key: string): string | null {
-  const match = new RegExp(`^\\s*${key}\\s*=\\s*([\"'])(.*)\\1\\s*(?:#.*)?$`).exec(line.trim());
-  if (!match) return null;
-  return match[2].replace(/\\(["'\\])/g, "$1");
-}
-
-function setAuthOpenAiApiKey(contents: string, apiKey: string): string {
-  let parsed: Record<string, unknown> = {};
-  try {
-    const value = JSON.parse(contents || "{}");
-    if (value && typeof value === "object" && !Array.isArray(value)) parsed = value as Record<string, unknown>;
-  } catch {
-    parsed = {};
-  }
-  parsed.OPENAI_API_KEY = apiKey.trim();
-  return `${JSON.stringify(parsed, null, 2)}\n`;
-}
-
-function setRootTomlStringKey(contents: string, key: string, value: string): string {
-  const trimmed = value.trim();
-  if (!trimmed) return removeRootTomlKey(contents, key);
-  return setRootTomlLine(contents, key, `${key} = "${tomlString(trimmed)}"`);
-}
-
-function setRootTomlIntKey(contents: string, key: string, value: string): string {
-  const trimmed = value.replace(/[^\d]/g, "");
-  if (!trimmed) return removeRootTomlKey(contents, key);
-  return setRootTomlLine(contents, key, `${key} = ${trimmed}`);
-}
-
-function setRootTomlLine(contents: string, key: string, lineText: string): string {
-  const lines = contents.split(/\r?\n/);
-  const firstTable = lines.findIndex((line) => /^\s*\[[^\]]+\]\s*$/.test(line));
-  const rootEnd = firstTable >= 0 ? firstTable : lines.length;
-  for (let index = 0; index < rootEnd; index += 1) {
-    if (new RegExp(`^\\s*${key}\\s*=`).test(lines[index])) {
-      lines[index] = lineText;
-      return ensureTrailingNewline(lines.join("\n").trimEnd());
-    }
-  }
-  const insertAt = key === "model" ? 0 : rootEnd;
-  lines.splice(insertAt, 0, lineText);
-  return ensureTrailingNewline(lines.join("\n").trimEnd());
-}
-
-function setCodexProviderStringKey(contents: string, key: string, value: string): string {
-  const provider = rootTomlStringValue(contents, "model_provider") || "custom";
-  let next = contents;
-  if (!rootTomlStringValue(next, "model_provider")) {
-    next = setRootTomlStringKey(next, "model_provider", provider);
-  }
-  next = ensureCodexProviderDefaults(next, provider);
-  return setTomlSectionStringKey(next, `model_providers.${provider}`, key, value);
-}
-
-function setCodexExperimentalBearerToken(contents: string, apiKey: string): string {
-  return setCodexProviderStringKey(contents, "experimental_bearer_token", apiKey.trim());
-}
-
-function removeCodexExperimentalBearerToken(contents: string): string {
-  const provider = rootTomlStringValue(contents, "model_provider") || "custom";
-  return removeTomlSectionKey(contents, `model_providers.${provider}`, "experimental_bearer_token");
-}
-
-function ensureCodexProviderDefaults(contents: string, provider: string): string {
-  let next = contents;
-  const section = `model_providers.${provider}`;
-  next = setTomlSectionStringKey(next, section, "name", provider);
-  next = setTomlSectionStringKey(next, section, "wire_api", "responses");
-  return setTomlSectionBoolKey(next, section, "requires_openai_auth", true);
-}
-
-function setTomlSectionBoolKey(contents: string, sectionName: string, key: string, value: boolean): string {
-  return setTomlSectionRawKey(contents, sectionName, key, value ? "true" : "false");
-}
-
-function setTomlSectionStringKey(contents: string, sectionName: string, key: string, value: string): string {
-  return setTomlSectionRawKey(contents, sectionName, key, `"${tomlString(value.trim())}"`);
-}
-
-function setTomlSectionRawKey(contents: string, sectionName: string, key: string, value: string): string {
-  const lines = contents.split(/\r?\n/);
-  let sectionStart = -1;
-  let sectionEnd = lines.length;
-  for (let index = 0; index < lines.length; index += 1) {
-    const section = tomlSectionName(lines[index]);
-    if (section === null) continue;
-    if (sectionStart >= 0) {
-      sectionEnd = index;
-      break;
-    }
-    if (section === sectionName) sectionStart = index;
-  }
-  if (sectionStart < 0) {
-    const prefix = ensureTrailingNewline(lines.join("\n").trimEnd()).trimEnd();
-    return joinTomlSections([prefix, `[${sectionName}]\n${key} = ${value}`]);
-  }
-  const replacement = `${key} = ${value}`;
-  for (let index = sectionStart + 1; index < sectionEnd; index += 1) {
-    if (new RegExp(`^\\s*${key}\\s*=`).test(lines[index])) {
-      lines[index] = replacement;
-      return ensureTrailingNewline(lines.join("\n").trimEnd());
-    }
-  }
-  let insertAt = sectionEnd;
-  while (insertAt > sectionStart + 1 && lines[insertAt - 1].trim() === "") insertAt -= 1;
-  lines.splice(insertAt, 0, replacement);
-  return ensureTrailingNewline(lines.join("\n").trimEnd());
-}
-
-function removeTomlSectionKey(contents: string, sectionName: string, key: string): string {
-  const lines = contents.split(/\r?\n/);
-  let sectionStart = -1;
-  let sectionEnd = lines.length;
-  for (let index = 0; index < lines.length; index += 1) {
-    const section = tomlSectionName(lines[index]);
-    if (section === null) continue;
-    if (sectionStart >= 0) {
-      sectionEnd = index;
-      break;
-    }
-    if (section === sectionName) sectionStart = index;
-  }
-  if (sectionStart < 0) return contents;
-  const next = lines.filter((line, index) => {
-    if (index <= sectionStart || index >= sectionEnd) return true;
-    return !new RegExp(`^\\s*${key}\\s*=`).test(line);
-  });
-  return ensureTrailingNewline(next.join("\n").trimEnd());
-}
-
-function relayProfileSwitchValidation(profile: RelayProfile): string | null {
-  if (profile.relayMode === "official" && !profile.officialMixApiKey) return null;
-  if (!profile.configContents.trim()) {
-    return `供应商「${profile.name || profile.id}」缺少独立 config.toml，已停止切换，避免继续显示上一套配置文件。请先在该供应商详情里保存 config.toml。`;
-  }
-  if (profile.relayMode !== "official" || !authJsonHasOpenAiApiKey(profile.authContents)) return null;
-  return "官方混合 API 不应在 auth.json 中保存 OPENAI_API_KEY。请清理此供应商的 auth.json 后再切换。";
-}
-
-function authJsonHasOpenAiApiKey(contents: string): boolean {
-  const trimmed = contents.trim();
-  if (!trimmed) return false;
-  try {
-    const value = JSON.parse(trimmed);
-    return !!value && typeof value === "object" && typeof value.OPENAI_API_KEY === "string" && value.OPENAI_API_KEY.trim().length > 0;
-  } catch {
-    return /"OPENAI_API_KEY"\s*:/.test(trimmed);
-  }
-}
-
-function tomlString(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-}
-
-function syncLegacyRelayFields(settings: BackendSettings): BackendSettings {
-  const relayProfiles = settings.relayProfiles.map(deriveRelayProfileFromFiles);
-  const active = activeRelayProfile({ ...settings, relayProfiles });
-  return {
-    ...settings,
-    relayProfiles,
-    activeRelayId: active.id,
-    relayBaseUrl: active.baseUrl,
-    relayApiKey: active.apiKey,
-  };
-}
-
-function mergeLiveLinkedRelayProfiles(settings: BackendSettings, liveSettings: BackendSettings): BackendSettings {
-  const liveLinkedById = new Map(
-    liveSettings.relayProfiles
-      .filter((profile) => profile.linkedCcsProviderId.trim())
-      .map((profile) => [profile.id, profile]),
-  );
-  if (!liveLinkedById.size) return settings;
-  const existingIds = new Set(settings.relayProfiles.map((profile) => profile.id));
-  const relayProfiles = [
-    ...settings.relayProfiles.map((profile) => liveLinkedById.get(profile.id) ?? profile),
-    ...liveSettings.relayProfiles.filter((profile) => profile.linkedCcsProviderId.trim() && !existingIds.has(profile.id)),
-  ];
-  return syncLegacyRelayFields({
-    ...settings,
-    relayProfiles,
-    activeRelayId: relayProfiles.some((profile) => profile.id === settings.activeRelayId)
-      ? settings.activeRelayId
-      : liveSettings.activeRelayId,
-  });
-}
-
-function updateRelayProfile(settings: BackendSettings, id: string, patch: Partial<RelayProfile>): BackendSettings {
-  return syncLegacyRelayFields({
-    ...settings,
-    relayProfiles: settings.relayProfiles.map((profile) => {
-      if (profile.id !== id) return profile;
-      return deriveRelayProfileFromFiles({ ...profile, ...patch });
-    }),
-  });
-}
-
-function createRelayProfile(settings: BackendSettings): RelayProfile {
-  const id = `relay-${Date.now().toString(36)}`;
-  const contextSelection = contextSelectionForAllEntries(settings);
-  const next = {
-    id,
-    linkedCcsProviderId: "",
-    name: `供应商 ${settings.relayProfiles.length + 1}`,
-    model: "",
-    baseUrl: defaultSettings.relayBaseUrl,
-    upstreamBaseUrl: defaultSettings.relayBaseUrl,
-    apiKey: "",
-    protocol: "responses" as RelayProtocol,
-    relayMode: "official" as RelayMode,
-    officialMixApiKey: false,
-    testModel: "",
-    configContents: "",
-    authContents: "",
-    useCommonConfig: true,
-    contextSelection,
-    contextSelectionInitialized: true,
-    contextWindow: "",
-    autoCompactLimit: "",
-    modelList: "",
-    userAgent: "",
-  };
-  return withGeneratedRelayFiles(next);
-}
-
-function addRelayProfile(settings: BackendSettings, profile: RelayProfile): BackendSettings {
-  const nextWithFiles = deriveRelayProfileFromFiles(
-    profile.configContents.trim() || profile.authContents.trim() ? profile : withGeneratedRelayFiles(profile),
-  );
-  const activeId = settings.relayProfiles.some((item) => item.id === settings.activeRelayId)
-    ? settings.activeRelayId
-    : activeRelayProfile(settings).id;
-  return syncLegacyRelayFields({
-    ...settings,
-    relayProfiles: [...settings.relayProfiles, nextWithFiles],
-    activeRelayId: activeId,
-  });
-}
-
-function duplicateRelayProfile(settings: BackendSettings, id: string): BackendSettings {
-  const sourceIndex = settings.relayProfiles.findIndex((profile) => profile.id === id);
-  const source = settings.relayProfiles[sourceIndex] || activeRelayProfile(settings);
-  const nextId = `relay-${Date.now().toString(36)}`;
-  const next = {
-    ...source,
-    id: nextId,
-    linkedCcsProviderId: "",
-    name: `${source.name || "未命名供应商"} 副本`,
-  };
-  const relayProfiles = [...settings.relayProfiles];
-  relayProfiles.splice(sourceIndex >= 0 ? sourceIndex + 1 : relayProfiles.length, 0, next);
-  return syncLegacyRelayFields({
-    ...settings,
-    relayProfiles,
-  });
-}
-
-function reorderRelayProfiles(settings: BackendSettings, sourceId: string, targetId: string): BackendSettings {
-  if (sourceId === targetId) return settings;
-  const sourceIndex = settings.relayProfiles.findIndex((profile) => profile.id === sourceId);
-  const targetIndex = settings.relayProfiles.findIndex((profile) => profile.id === targetId);
-  if (sourceIndex < 0 || targetIndex < 0) return settings;
-  const relayProfiles = [...settings.relayProfiles];
-  const [moved] = relayProfiles.splice(sourceIndex, 1);
-  relayProfiles.splice(targetIndex, 0, moved);
-  return syncLegacyRelayFields({
-    ...settings,
-    relayProfiles,
-  });
-}
-
-function removeRelayProfile(settings: BackendSettings, id: string): BackendSettings {
-  const profiles = settings.relayProfiles.filter((profile) => profile.id !== id);
-  return syncLegacyRelayFields({
-    ...settings,
-    relayProfiles: profiles.length ? profiles : defaultSettings.relayProfiles,
-    activeRelayId: settings.activeRelayId === id ? profiles[0]?.id || "default" : settings.activeRelayId,
-  });
 }
 
 function numberOrDefault(value: string, fallback: number) {

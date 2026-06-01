@@ -1,7 +1,6 @@
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
-use crate::settings::{RelayProfile, SettingsStore};
 use serde_json::{Value, json};
 
 const BASE_URL_ENV_KEYS: &[&str] = &[
@@ -36,12 +35,6 @@ struct CodexConfig {
 
 pub async fn read_codex_model_catalog() -> Value {
     let home = codex_home_dir();
-    let settings_path = crate::paths::default_settings_path();
-    if settings_path.exists() {
-        if let Ok(settings) = SettingsStore::new(settings_path).load() {
-            return relay_profile_model_catalog_value(&home, &settings.active_relay_profile());
-        }
-    }
     let env = std::env::vars().collect::<HashMap<_, _>>();
     let client = match crate::http_client::proxied_client("CodexPlusPlus/1.0") {
         Ok(client) => client,
@@ -61,54 +54,6 @@ pub async fn read_codex_model_catalog() -> Value {
         }
     };
     read_codex_model_catalog_from_home(&home, &env, client).await
-}
-
-fn relay_profile_model_catalog_value(home: &Path, profile: &RelayProfile) -> Value {
-    let models = relay_profile_model_ids(profile);
-    let model = profile.model.trim().to_string();
-    let default_model = if models.iter().any(|item| item == &model) {
-        model.clone()
-    } else {
-        models.first().cloned().unwrap_or_default()
-    };
-    let provider_name = if profile.name.trim().is_empty() {
-        profile.id.trim()
-    } else {
-        profile.name.trim()
-    };
-    let model_count = models.len();
-    json!({
-        "status": if models.is_empty() { "not_configured" } else { "ok" },
-        "path": home.join("config.toml").to_string_lossy(),
-        "model": model,
-        "model_provider": profile.id.trim(),
-        "provider_name": provider_name,
-        "default_model": default_model,
-        "models": models,
-        "sources": [
-            {
-                "id": format!("relay-profile:{}", profile.id),
-                "type": "relay_profile_model_list",
-                "name": provider_name,
-                "base_url": profile.base_url.trim(),
-                "status": "ok",
-                "models": model_count,
-                "responses_api": responses_api_status("unknown", "", "")
-            }
-        ],
-        "responses_api": responses_api_status("unknown", "", "")
-    })
-}
-
-fn relay_profile_model_ids(profile: &RelayProfile) -> Vec<String> {
-    unique_strings(
-        std::iter::once(profile.model.as_str())
-            .chain(profile.model_list.split(['\r', '\n', ',']))
-            .map(str::trim)
-            .filter(|value| !value.is_empty())
-            .map(ToString::to_string)
-            .collect(),
-    )
 }
 
 pub async fn read_codex_model_catalog_from_home(
@@ -215,7 +160,11 @@ fn codex_home_dir() -> PathBuf {
     std::env::var_os("CODEX_HOME")
         .filter(|value| !value.is_empty())
         .map(PathBuf::from)
-        .unwrap_or_else(crate::relay_config::default_codex_home_dir)
+        .unwrap_or_else(|| {
+            directories::BaseDirs::new()
+                .map(|dirs| dirs.home_dir().join(".codex"))
+                .unwrap_or_else(|| PathBuf::from(".codex"))
+        })
 }
 
 fn load_codex_config(path: &Path) -> (CodexConfig, HashMap<String, String>, Option<String>) {
@@ -505,40 +454,6 @@ fn responses_api_status(status: &str, endpoint: &str, message: &str) -> Value {
         "endpoint": endpoint,
         "message": message
     })
-}
-
-pub async fn fetch_relay_profile_model_ids(
-    profile: &RelayProfile,
-) -> anyhow::Result<(Vec<String>, String)> {
-    let source = ModelSource {
-        source_id: format!("relay-profile:{}", profile.id),
-        source_type: "relay_profile".to_string(),
-        name: if profile.name.trim().is_empty() {
-            profile.id.clone()
-        } else {
-            profile.name.trim().to_string()
-        },
-        base_url: if profile.upstream_base_url.trim().is_empty() {
-            profile.base_url.trim().to_string()
-        } else {
-            profile.upstream_base_url.trim().to_string()
-        },
-        api_key: profile.api_key.trim().to_string(),
-    };
-    if source.base_url.is_empty() {
-        anyhow::bail!("Base URL 不能为空");
-    }
-    let endpoint = models_endpoint(&source.base_url);
-    let client = crate::http_client::proxied_client(&profile.user_agent)?;
-    let (models, status) = fetch_models_from_source(&client, &source).await;
-    if models.is_empty() {
-        let message = status
-            .get("message")
-            .and_then(Value::as_str)
-            .unwrap_or("上游没有返回可用模型");
-        anyhow::bail!("{message}");
-    }
-    Ok((models, endpoint))
 }
 
 fn preferred_responses_api_status(sources: &[Value]) -> Value {

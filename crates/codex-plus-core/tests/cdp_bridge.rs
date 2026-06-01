@@ -82,22 +82,6 @@ fn injection_script_times_out_backend_bridge_calls_and_falls_back_to_helper() {
 }
 
 #[test]
-fn injection_script_explains_plugin_patch_is_unneeded_in_relay_mode() {
-    let script = assets::injection_script(57321);
-
-    assert!(script.contains("兼容增强模式下无需开启"));
-}
-
-#[test]
-fn injection_script_skips_plugin_patch_work_in_relay_mode() {
-    let script = assets::injection_script(57321);
-
-    assert!(script.contains("function pluginPatchDisabledInRelayMode()"));
-    assert!(script.contains("!codexPlusBackendSettingsLoaded"));
-    assert!(script.contains("if (pluginPatchDisabledInRelayMode()) return"));
-    assert!(script.contains("clearPluginPatchArtifacts()"));
-}
-
 #[test]
 fn injection_script_unlocks_nested_disabled_plugin_install_buttons() {
     let script = assets::injection_script(57321);

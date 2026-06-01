@@ -41,7 +41,6 @@ pub fn run() {
             commands::load_ccs_providers,
             commands::import_ccs_providers,
             commands::sync_providers_now,
-            commands::load_ads,
             commands::refresh_script_market,
             commands::install_market_script,
             commands::set_user_script_enabled,
@@ -61,22 +60,7 @@ pub fn run() {
             commands::read_latest_logs,
             commands::copy_diagnostics,
             commands::reset_settings,
-            commands::relay_status,
-            commands::read_relay_files,
-            commands::save_relay_file,
-            commands::write_diagnostic_event,
-            commands::backfill_relay_profile_from_live,
-            commands::list_context_entries,
-            commands::read_live_context_entries,
-            commands::sync_live_context_entries,
-            commands::upsert_context_entry,
-            commands::delete_context_entry,
-            commands::extract_relay_common_config,
-            commands::test_relay_profile,
-            commands::fetch_relay_profile_models,
-            commands::apply_relay_injection,
-            commands::apply_pure_api_injection,
-            commands::clear_relay_injection
+            commands::write_diagnostic_event
         ])
         .run(tauri::generate_context!());
     if let Err(error) = run_result {

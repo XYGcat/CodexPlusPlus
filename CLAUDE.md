@@ -14,7 +14,7 @@ Rust workspace (edition 2024) + Tauri 2.x desktop manager app. Enhancement launc
 
 | Crate/Path | Role |
 |---|---|
-| `crates/codex-plus-core` | Platform-agnostic business logic: CDP bridge, relay proxy, updater, script market, worktree, zed remote |
+| `crates/codex-plus-core` | Platform-agnostic business logic: CDP bridge, updater, script market, worktree, zed remote |
 | `crates/codex-plus-data` | SQLite data layer — reads/writes Codex's `state_5.sqlite` |
 | `apps/codex-plus-launcher` | Headless launcher binary (`codex-plus-plus`). Single-instance guard, CDP injection, provider sync |
 | `apps/codex-plus-manager/src-tauri` | Tauri manager app — 50+ commands in `commands.rs` |
@@ -26,7 +26,7 @@ Rust workspace (edition 2024) + Tauri 2.x desktop manager app. Enhancement launc
 1. Launcher starts Codex with `--remote-debugging-port`
 2. CDP HTTP `GET /json` discovers renderer targets
 3. CDP WebSocket connects, calls `Runtime.addBinding` → creates bridge
-4. Bridge routes requests (session delete, undo, export, ads, etc.) via local TCP HTTP on port 57321
+4. Bridge routes requests (session delete, undo, export, etc.) via local TCP HTTP on port 57321
 5. Direct SQLite access to `~/.codex/state_5.sqlite` for session data
 
 ## Conventions

@@ -29,7 +29,7 @@ Download the latest installer from [GitHub Releases](https://github.com/BigPizza
 After installation, two entry points are available:
 
 - `Codex++`: a silent launcher. It does not show the manager UI and only starts Codex with Codex++ injection.
-- `Codex++ Manager`: a Tauri control panel for launch, diagnostics, repair, updates, relay injection, enhancements, and user scripts.
+- `Codex++ Manager`: a Tauri control panel for launch, diagnostics, repair, updates, enhancements, and user scripts.
 
 The Windows installer creates desktop and Start Menu shortcuts. The macOS DMG installs `/Applications/Codex++.app` and `/Applications/Codex++ 管理工具.app`.
 
@@ -115,7 +115,6 @@ The Windows installer creates desktop and Start Menu shortcuts. The macOS DMG in
 - Rust backend and silent launcher with no extra runtime requirement.
 - Tauri + React manager with dark/light theme support.
 - External CDP injection. No `app.asar` patching and no DLL writes into the Codex installation.
-- Relay injection mode with multiple relay profiles, `CodexPlusPlus` provider configuration, and a one-click switch back to official ChatGPT login mode.
 - Traditional enhancement mode with plugin entry unlock, forced plugin install, session delete, Markdown export, project move, Timeline, and more.
 - Independent user script management with startup injection.
 - Provider Sync to keep historical sessions visible after switching providers.
@@ -125,48 +124,9 @@ The Windows installer creates desktop and Start Menu shortcuts. The macOS DMG in
 - Windows single instance, no console window, administrator manifest, and system Desktop path detection.
 - Separate macOS x64 and arm64 DMGs. The silent launcher hides its Dock icon.
 
-## Relay Injection
-
-Relay injection is for users who are already logged in with an official ChatGPT account in Codex/ChatGPT and want model requests to go through a custom compatible API.
-
-In the manager's Relay Injection page:
-
-1. Make sure ChatGPT login status is detected.
-2. Add one or more relay profiles with Base URL and Key.
-3. Select the active profile and apply relay injection.
-4. Launch `Codex++`.
-
-Codex++ writes configuration similar to this into `~/.codex/config.toml`:
-
-```toml
-model_provider = "CodexPlusPlus"
-
-[model_providers.CodexPlusPlus]
-name = "CodexPlusPlus"
-wire_api = "responses"
-requires_openai_auth = true
-base_url = "https://example.com/v1"
-experimental_bearer_token = "sk-..."
-```
-
-To return to the official login mode, use the clear API mode button in the Relay Injection page. This removes `OPENAI_API_KEY` related configuration and switches Codex back to official ChatGPT authentication.
-
 ## Enhancements
 
 Enhancements are controlled in the manager. Enhancement injection is enabled by default. When disabled, Codex++ will not inject its menu or scripts.
-
-When relay injection mode is active, plugin entry unlock and forced plugin install are unnecessary, and the UI will say so. Other enhancements, including session delete, export, move, Timeline, recommendations, and user scripts, can still be used.
-
-## Recommendations
-
-Recommended content is loaded from:
-
-```text
-https://raw.githubusercontent.com/BigPizzaV3/Ad-List/main/ads.json
-https://cdn.jsdelivr.net/gh/BigPizzaV3/Ad-List@main/ads.json
-```
-
-Requests automatically append a `?v=timestamp` cache buster to avoid stale CDN content. Slow recommendation loading does not mark the backend connection as failed.
 
 ## Updates and Packages
 

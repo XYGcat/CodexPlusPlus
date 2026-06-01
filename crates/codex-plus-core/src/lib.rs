@@ -1,4 +1,3 @@
-pub mod ads;
 pub mod app_paths;
 pub mod assets;
 pub mod bridge;
@@ -13,9 +12,7 @@ pub mod model_catalog;
 pub mod models;
 pub mod paths;
 pub mod ports;
-pub mod protocol_proxy;
 pub mod proxy;
-pub mod relay_config;
 pub mod routes;
 pub mod script_market;
 pub mod settings;
