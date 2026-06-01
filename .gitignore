@@ -11,7 +11,10 @@ apps/codex-plus-manager/src-tauri/gen/
 .codex_asar_extract/
 .codex_asar_extract_latest/
 .superpowers/
-.claude/
+# Claude Code — ignore local-only files, keep project config commitable
+.claude/worktrees/
+.claude/settings.local.json
+.claude/scheduled_tasks.json
 docs/superpowers/
 
 *.log
