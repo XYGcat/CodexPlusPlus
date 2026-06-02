@@ -5,137 +5,6 @@ use anyhow::Context;
 use serde::Deserialize;
 use serde_json::{Map, Value};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize, Default)]
-#[serde(rename_all = "lowercase")]
-pub enum LaunchMode {
-    #[default]
-    Patch,
-    Relay,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct RelayContextSelection {
-    #[serde(default)]
-    pub mcp_servers: Vec<String>,
-    #[serde(default)]
-    pub skills: Vec<String>,
-    #[serde(default)]
-    pub plugins: Vec<String>,
-}
-
-impl Default for RelayContextSelection {
-    fn default() -> Self {
-        Self {
-            mcp_servers: Vec::new(),
-            skills: Vec::new(),
-            plugins: Vec::new(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct RelayProfile {
-    pub id: String,
-    #[serde(rename = "linkedCcsProviderId", default)]
-    pub linked_ccs_provider_id: String,
-    pub name: String,
-    #[serde(default, skip_serializing)]
-    pub model: String,
-    #[serde(default = "default_relay_base_url", skip_serializing)]
-    pub base_url: String,
-    #[serde(rename = "upstreamBaseUrl", default)]
-    pub upstream_base_url: String,
-    #[serde(default, skip_serializing)]
-    pub api_key: String,
-    #[serde(default)]
-    pub protocol: RelayProtocol,
-    #[serde(rename = "relayMode", default)]
-    pub relay_mode: RelayMode,
-    #[serde(rename = "officialMixApiKey", default)]
-    pub official_mix_api_key: bool,
-    #[serde(rename = "testModel", default)]
-    pub test_model: String,
-    #[serde(rename = "configContents", default)]
-    pub config_contents: String,
-    #[serde(rename = "authContents", default)]
-    pub auth_contents: String,
-    #[serde(rename = "useCommonConfig", default = "default_true")]
-    pub use_common_config: bool,
-    #[serde(rename = "contextSelection", default)]
-    pub context_selection: RelayContextSelection,
-    #[serde(rename = "contextSelectionInitialized", default)]
-    pub context_selection_initialized: bool,
-    #[serde(rename = "contextWindow", default)]
-    pub context_window: String,
-    #[serde(rename = "autoCompactLimit", default)]
-    pub auto_compact_limit: String,
-    #[serde(rename = "modelInsertMode", default)]
-    pub model_insert_mode: RelayModelInsertMode,
-    #[serde(rename = "modelList", default)]
-    pub model_list: String,
-    #[serde(
-        rename = "userAgent",
-        default,
-        skip_serializing_if = "String::is_empty"
-    )]
-    pub user_agent: String,
-}
-
-impl Default for RelayProfile {
-    fn default() -> Self {
-        Self {
-            id: "default".to_string(),
-            linked_ccs_provider_id: String::new(),
-            name: "默认中转".to_string(),
-            model: String::new(),
-            base_url: default_relay_base_url(),
-            upstream_base_url: String::new(),
-            api_key: String::new(),
-            protocol: RelayProtocol::Responses,
-            relay_mode: RelayMode::Official,
-            official_mix_api_key: false,
-            test_model: String::new(),
-            config_contents: String::new(),
-            auth_contents: String::new(),
-            use_common_config: true,
-            context_selection: RelayContextSelection::default(),
-            context_selection_initialized: false,
-            context_window: String::new(),
-            auto_compact_limit: String::new(),
-            model_insert_mode: RelayModelInsertMode::Patch,
-            model_list: String::new(),
-            user_agent: String::new(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub enum RelayModelInsertMode {
-    ModelCatalog,
-    #[default]
-    Patch,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub enum RelayProtocol {
-    #[default]
-    Responses,
-    ChatCompletions,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub enum RelayMode {
-    Official,
-    #[default]
-    MixedApi,
-    PureApi,
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct BackendSettings {
     #[serde(rename = "codexAppPath", default)]
@@ -144,8 +13,6 @@ pub struct BackendSettings {
     pub codex_extra_args: Vec<String>,
     #[serde(rename = "providerSyncEnabled", default)]
     pub provider_sync_enabled: bool,
-    #[serde(rename = "relayProfilesEnabled", default = "default_true")]
-    pub relay_profiles_enabled: bool,
     #[serde(rename = "ccsLinkEnabled", default)]
     pub ccs_link_enabled: bool,
     #[serde(rename = "enhancementsEnabled", default = "default_true")]
@@ -154,8 +21,6 @@ pub struct BackendSettings {
     pub codex_app_plugin_entry_unlock: bool,
     #[serde(rename = "codexAppForcePluginInstall", default = "default_true")]
     pub codex_app_force_plugin_install: bool,
-    #[serde(rename = "codexAppModelWhitelistUnlock", default = "default_true")]
-    pub codex_app_model_whitelist_unlock: bool,
     #[serde(rename = "codexAppSessionDelete", default = "default_true")]
     pub codex_app_session_delete: bool,
     #[serde(rename = "codexAppMarkdownExport", default = "default_true")]
@@ -178,22 +43,6 @@ pub struct BackendSettings {
     pub codex_app_service_tier_controls: bool,
     #[serde(rename = "codexGoalsEnabled", default)]
     pub codex_goals_enabled: bool,
-    #[serde(rename = "launchMode", default)]
-    pub launch_mode: LaunchMode,
-    #[serde(rename = "relayBaseUrl", default = "default_relay_base_url")]
-    pub relay_base_url: String,
-    #[serde(rename = "relayApiKey", default)]
-    pub relay_api_key: String,
-    #[serde(rename = "relayProfiles", default = "default_relay_profiles")]
-    pub relay_profiles: Vec<RelayProfile>,
-    #[serde(rename = "relayCommonConfigContents", default)]
-    pub relay_common_config_contents: String,
-    #[serde(rename = "relayContextConfigContents", default)]
-    pub relay_context_config_contents: String,
-    #[serde(rename = "activeRelayId", default = "default_active_relay_id")]
-    pub active_relay_id: String,
-    #[serde(rename = "relayTestModel", default = "default_relay_test_model")]
-    pub relay_test_model: String,
     #[serde(rename = "cliWrapperEnabled", default)]
     pub cli_wrapper_enabled: bool,
     #[serde(rename = "cliWrapperBaseUrl", default)]
@@ -214,12 +63,10 @@ impl Default for BackendSettings {
             codex_app_path: String::new(),
             codex_extra_args: Vec::new(),
             provider_sync_enabled: false,
-            relay_profiles_enabled: true,
             ccs_link_enabled: false,
             enhancements_enabled: true,
             codex_app_plugin_entry_unlock: true,
             codex_app_force_plugin_install: true,
-            codex_app_model_whitelist_unlock: true,
             codex_app_session_delete: true,
             codex_app_markdown_export: true,
             codex_app_project_move: true,
@@ -231,104 +78,10 @@ impl Default for BackendSettings {
             codex_app_native_menu_placement: true,
             codex_app_service_tier_controls: false,
             codex_goals_enabled: false,
-            launch_mode: LaunchMode::Patch,
-            relay_base_url: default_relay_base_url(),
-            relay_api_key: String::new(),
-            relay_profiles: default_relay_profiles(),
-            relay_common_config_contents: String::new(),
-            relay_context_config_contents: String::new(),
-            active_relay_id: default_active_relay_id(),
-            relay_test_model: default_relay_test_model(),
             cli_wrapper_enabled: false,
             cli_wrapper_base_url: String::new(),
             cli_wrapper_api_key: String::new(),
             cli_wrapper_api_key_env: default_api_key_env(),
-        }
-    }
-}
-
-impl BackendSettings {
-    pub fn active_relay_profile(&self) -> RelayProfile {
-        if self.active_relay_id == default_active_relay_id()
-            && self.relay_profiles.len() == 1
-            && self.relay_profiles[0] == RelayProfile::default()
-            && (!self.relay_api_key.is_empty() || self.relay_base_url != default_relay_base_url())
-        {
-            return RelayProfile {
-                id: default_active_relay_id(),
-                linked_ccs_provider_id: String::new(),
-                name: "默认中转".to_string(),
-                model: String::new(),
-                base_url: if self.relay_base_url.is_empty() {
-                    default_relay_base_url()
-                } else {
-                    self.relay_base_url.clone()
-                },
-                upstream_base_url: if self.relay_base_url.is_empty() {
-                    default_relay_base_url()
-                } else {
-                    self.relay_base_url.clone()
-                },
-                api_key: self.relay_api_key.clone(),
-                protocol: RelayProtocol::Responses,
-                relay_mode: RelayMode::MixedApi,
-                official_mix_api_key: true,
-                test_model: String::new(),
-                config_contents: String::new(),
-                auth_contents: String::new(),
-                use_common_config: true,
-                context_selection: RelayContextSelection::default(),
-                context_selection_initialized: false,
-                context_window: String::new(),
-                auto_compact_limit: String::new(),
-                model_insert_mode: RelayModelInsertMode::Patch,
-                model_list: String::new(),
-                user_agent: String::new(),
-            };
-        }
-
-        if let Some(profile) = self
-            .relay_profiles
-            .iter()
-            .find(|profile| profile.id == self.active_relay_id)
-        {
-            return profile.clone();
-        }
-
-        RelayProfile {
-            id: if self.active_relay_id.is_empty() {
-                default_active_relay_id()
-            } else {
-                self.active_relay_id.clone()
-            },
-            linked_ccs_provider_id: String::new(),
-            name: "默认中转".to_string(),
-            model: String::new(),
-            base_url: if self.relay_base_url.is_empty() {
-                default_relay_base_url()
-            } else {
-                self.relay_base_url.clone()
-            },
-            upstream_base_url: if self.relay_base_url.is_empty() {
-                default_relay_base_url()
-            } else {
-                self.relay_base_url.clone()
-            },
-            api_key: self.relay_api_key.clone(),
-            protocol: RelayProtocol::Responses,
-            relay_mode: RelayMode::Official,
-            official_mix_api_key: false,
-            test_model: String::new(),
-            config_contents: String::new(),
-            auth_contents: String::new(),
-            use_common_config: true,
-            context_selection: RelayContextSelection::default(),
-            context_selection_initialized: false,
-            context_window: String::new(),
-            auto_compact_limit: String::new(),
-            model_insert_mode: RelayModelInsertMode::Patch,
-            model_list: String::new(),
-            user_agent: String::new(),
         }
     }
 }
@@ -339,22 +92,6 @@ pub fn default_api_key_env() -> String {
 
 pub fn default_true() -> bool {
     true
-}
-
-pub fn default_relay_base_url() -> String {
-    String::new()
-}
-
-pub fn default_active_relay_id() -> String {
-    "default".to_string()
-}
-
-pub fn default_relay_test_model() -> String {
-    "gpt-5.4-mini".to_string()
-}
-
-pub fn default_relay_profiles() -> Vec<RelayProfile> {
-    vec![RelayProfile::default()]
 }
 
 pub fn empty_as_default_api_key_env<'de, D>(deserializer: D) -> Result<String, D::Error>
@@ -403,13 +140,11 @@ impl SettingsStore {
             }
         };
 
-        Ok(normalize_settings_config_sections(
-            serde_json::from_str(&contents).unwrap_or_default(),
-        ))
+        Ok(serde_json::from_str(&contents).unwrap_or_default())
     }
 
     pub fn save(&self, settings: &BackendSettings) -> anyhow::Result<()> {
-        let mut settings = normalize_settings_config_sections(settings.clone());
+        let mut settings = settings.clone();
         settings.codex_extra_args = normalize_codex_extra_args(&settings.codex_extra_args);
         let bytes = serde_json::to_vec_pretty(&settings)?;
         atomic_write(&self.path, &bytes)
@@ -422,17 +157,8 @@ impl SettingsStore {
 
         let mut raw = self.load_raw_object()?;
         merge_known_setting_fields(&mut raw, &payload);
-        let settings = normalize_settings_config_sections(
-            serde_json::from_value(Value::Object(raw.clone())).unwrap_or_default(),
-        );
-        raw.insert(
-            "relayCommonConfigContents".to_string(),
-            Value::String(settings.relay_common_config_contents.clone()),
-        );
-        raw.insert(
-            "relayContextConfigContents".to_string(),
-            Value::String(settings.relay_context_config_contents.clone()),
-        );
+        let settings: BackendSettings =
+            serde_json::from_value(Value::Object(raw.clone())).unwrap_or_default();
         let bytes = serde_json::to_vec_pretty(&Value::Object(raw))?;
         atomic_write(&self.path, &bytes)?;
         Ok(settings)
@@ -480,9 +206,6 @@ fn merge_known_setting_fields(target: &mut Map<String, Value>, source: &Map<Stri
     if let Some(value) = source.get("providerSyncEnabled").and_then(Value::as_bool) {
         target.insert("providerSyncEnabled".to_string(), Value::Bool(value));
     }
-    if let Some(value) = source.get("relayProfilesEnabled").and_then(Value::as_bool) {
-        target.insert("relayProfilesEnabled".to_string(), Value::Bool(value));
-    }
     if let Some(value) = source.get("ccsLinkEnabled").and_then(Value::as_bool) {
         target.insert("ccsLinkEnabled".to_string(), Value::Bool(value));
     }
@@ -491,7 +214,6 @@ fn merge_known_setting_fields(target: &mut Map<String, Value>, source: &Map<Stri
     }
     merge_bool_setting(target, source, "codexAppPluginEntryUnlock");
     merge_bool_setting(target, source, "codexAppForcePluginInstall");
-    merge_bool_setting(target, source, "codexAppModelWhitelistUnlock");
     merge_bool_setting(target, source, "codexAppSessionDelete");
     merge_bool_setting(target, source, "codexAppMarkdownExport");
     merge_bool_setting(target, source, "codexAppProjectMove");
@@ -504,59 +226,6 @@ fn merge_known_setting_fields(target: &mut Map<String, Value>, source: &Map<Stri
     merge_bool_setting(target, source, "codexAppServiceTierControls");
     if let Some(value) = source.get("codexGoalsEnabled").and_then(Value::as_bool) {
         target.insert("codexGoalsEnabled".to_string(), Value::Bool(value));
-    }
-    if let Some(value) = source.get("launchMode").and_then(Value::as_str) {
-        if matches!(value, "patch" | "relay") {
-            target.insert("launchMode".to_string(), Value::String(value.to_string()));
-        }
-    }
-    if let Some(value) = source.get("relayBaseUrl").and_then(Value::as_str) {
-        target.insert("relayBaseUrl".to_string(), Value::String(value.to_string()));
-    }
-    if let Some(value) = source.get("relayApiKey").and_then(Value::as_str) {
-        target.insert("relayApiKey".to_string(), Value::String(value.to_string()));
-    }
-    if let Some(value) = source.get("relayProfiles").and_then(Value::as_array) {
-        let profiles = serde_json::from_value::<Vec<RelayProfile>>(Value::Array(value.clone()))
-            .unwrap_or_default();
-        target.insert(
-            "relayProfiles".to_string(),
-            serde_json::to_value(profiles).unwrap_or_else(|_| Value::Array(Vec::new())),
-        );
-    }
-    if let Some(value) = source
-        .get("relayCommonConfigContents")
-        .and_then(Value::as_str)
-    {
-        target.insert(
-            "relayCommonConfigContents".to_string(),
-            Value::String(value.to_string()),
-        );
-    }
-    if let Some(value) = source
-        .get("relayContextConfigContents")
-        .and_then(Value::as_str)
-    {
-        target.insert(
-            "relayContextConfigContents".to_string(),
-            Value::String(value.to_string()),
-        );
-    }
-    if let Some(value) = source.get("activeRelayId").and_then(Value::as_str) {
-        target.insert(
-            "activeRelayId".to_string(),
-            Value::String(value.to_string()),
-        );
-    }
-    if let Some(value) = source.get("relayTestModel").and_then(Value::as_str) {
-        target.insert(
-            "relayTestModel".to_string(),
-            Value::String(if value.trim().is_empty() {
-                default_relay_test_model()
-            } else {
-                value.trim().to_string()
-            }),
-        );
     }
     if let Some(value) = source.get("cliWrapperEnabled").and_then(Value::as_bool) {
         target.insert("cliWrapperEnabled".to_string(), Value::Bool(value));
@@ -595,69 +264,6 @@ fn settings_to_object(settings: &BackendSettings) -> Map<String, Value> {
     match serde_json::to_value(settings).unwrap_or_else(|_| Value::Object(Map::new())) {
         Value::Object(map) => map,
         _ => Map::new(),
-    }
-}
-
-fn normalize_settings_config_sections(mut settings: BackendSettings) -> BackendSettings {
-    let (common, extracted_context) =
-        split_context_config_sections(&settings.relay_common_config_contents);
-    let context = join_config_sections(&[
-        settings.relay_context_config_contents.as_str(),
-        extracted_context.as_str(),
-    ]);
-    settings.relay_common_config_contents = crate::relay_config::normalize_config_text(&common);
-    settings.relay_context_config_contents = crate::relay_config::normalize_config_text(&context);
-    for profile in &mut settings.relay_profiles {
-        let _ = crate::relay_config::normalize_relay_profile_for_storage(profile);
-    }
-    settings
-}
-
-fn split_context_config_sections(config: &str) -> (String, String) {
-    let mut common = Vec::new();
-    let mut context = Vec::new();
-    let mut in_context_table = false;
-
-    for line in config.lines() {
-        let trimmed = line.trim();
-        if trimmed.starts_with('[') && trimmed.ends_with(']') {
-            in_context_table = is_context_table_header(trimmed);
-        }
-        if in_context_table {
-            context.push(line);
-        } else {
-            common.push(line);
-        }
-    }
-
-    (
-        normalize_text_config(common.join("\n")),
-        normalize_text_config(context.join("\n")),
-    )
-}
-
-fn is_context_table_header(header: &str) -> bool {
-    header.starts_with("[mcp_servers.")
-        || header.starts_with("[skills.")
-        || header.starts_with("[plugins.")
-}
-
-fn join_config_sections(sections: &[&str]) -> String {
-    let joined = sections
-        .iter()
-        .map(|section| section.trim())
-        .filter(|section| !section.is_empty())
-        .collect::<Vec<_>>()
-        .join("\n\n");
-    normalize_text_config(joined)
-}
-
-fn normalize_text_config(contents: String) -> String {
-    let trimmed = contents.trim();
-    if trimmed.is_empty() {
-        String::new()
-    } else {
-        format!("{trimmed}\n")
     }
 }
 
@@ -712,18 +318,11 @@ mod tests {
     fn settings_default_matches_expected_behavior() {
         let settings = BackendSettings::default();
         assert!(!settings.provider_sync_enabled);
-        assert!(settings.relay_profiles_enabled);
         assert!(!settings.ccs_link_enabled);
         assert!(settings.enhancements_enabled);
         assert!(!settings.codex_goals_enabled);
         assert!(settings.codex_app_path.is_empty());
         assert!(settings.codex_extra_args.is_empty());
-        assert_eq!(settings.launch_mode, LaunchMode::Patch);
-        assert_eq!(settings.relay_base_url, default_relay_base_url());
-        assert!(settings.relay_api_key.is_empty());
-        assert_eq!(settings.relay_profiles[0].relay_mode, RelayMode::Official);
-        assert!(settings.relay_common_config_contents.is_empty());
-        assert_eq!(settings.relay_test_model, default_relay_test_model());
         assert!(!settings.cli_wrapper_enabled);
         assert_eq!(settings.cli_wrapper_api_key_env, "CUSTOM_OPENAI_API_KEY");
     }
@@ -741,7 +340,6 @@ mod tests {
         assert_eq!(settings.cli_wrapper_base_url, "https://example.test");
         assert_eq!(settings.cli_wrapper_api_key, "sk-test");
         assert_eq!(settings.cli_wrapper_api_key_env, "CUSTOM_OPENAI_API_KEY");
-        assert_eq!(settings.relay_base_url, default_relay_base_url());
         assert!(settings.codex_extra_args.is_empty());
     }
 
@@ -759,180 +357,6 @@ mod tests {
                 " --ignored-trimmed-by-ui ".to_string(),
             ]
         );
-    }
-
-    #[test]
-    fn relay_profile_official_mix_api_key_defaults_to_false() {
-        let profile: RelayProfile =
-            serde_json::from_str(r#"{"id":"official","name":"官方","relayMode":"official"}"#)
-                .unwrap();
-
-        assert_eq!(profile.relay_mode, RelayMode::Official);
-        assert!(!profile.official_mix_api_key);
-        assert!(profile.test_model.is_empty());
-    }
-
-    #[test]
-    fn relay_profile_context_fields_default_to_empty() {
-        let profile = RelayProfile::default();
-
-        assert!(profile.context_selection.mcp_servers.is_empty());
-        assert!(profile.context_selection.skills.is_empty());
-        assert!(profile.context_selection.plugins.is_empty());
-        assert!(profile.use_common_config);
-        assert!(!profile.context_selection_initialized);
-        assert!(profile.context_window.is_empty());
-        assert!(profile.auto_compact_limit.is_empty());
-        assert_eq!(profile.model_insert_mode, RelayModelInsertMode::Patch);
-        assert!(profile.model_list.is_empty());
-    }
-
-    #[test]
-    fn relay_profile_context_fields_deserialize_from_camel_case() {
-        let profile: RelayProfile = serde_json::from_str(
-            r#"{
-                "id":"relay-a",
-                "name":"供应商 A",
-                "contextSelection":{
-                    "mcpServers":["context7"],
-                    "skills":["writer"],
-                    "plugins":["local"]
-                },
-                "contextSelectionInitialized":true,
-                "useCommonConfig":false,
-                "contextWindow":"200000",
-                "autoCompactLimit":"160000",
-                "modelInsertMode":"patch",
-                "modelList":"qwen3-coder\ndeepseek-coder"
-            }"#,
-        )
-        .unwrap();
-
-        assert_eq!(profile.context_selection.mcp_servers, vec!["context7"]);
-        assert_eq!(profile.context_selection.skills, vec!["writer"]);
-        assert_eq!(profile.context_selection.plugins, vec!["local"]);
-        assert!(!profile.use_common_config);
-        assert!(profile.context_selection_initialized);
-        assert_eq!(profile.context_window, "200000");
-        assert_eq!(profile.auto_compact_limit, "160000");
-        assert_eq!(profile.model_insert_mode, RelayModelInsertMode::Patch);
-        assert_eq!(profile.model_list, "qwen3-coder\ndeepseek-coder");
-    }
-
-    #[test]
-    fn relay_profile_derived_fields_are_read_but_not_serialized() {
-        let profile: RelayProfile = serde_json::from_str(
-            r#"{
-                "id":"relay-a",
-                "name":"供应商 A",
-                "model":"gpt-5.4",
-                "baseUrl":"https://relay.example/v1",
-                "apiKey":"sk-test",
-                "configContents":"model = \"gpt-5.4\"\n",
-                "authContents":"{\"OPENAI_API_KEY\":\"sk-test\"}"
-            }"#,
-        )
-        .unwrap();
-
-        assert_eq!(profile.model, "gpt-5.4");
-        assert_eq!(profile.base_url, "https://relay.example/v1");
-        assert_eq!(profile.api_key, "sk-test");
-
-        let saved = serde_json::to_value(&profile).unwrap();
-        assert!(saved.get("model").is_none());
-        assert!(saved.get("baseUrl").is_none());
-        assert!(saved.get("apiKey").is_none());
-        assert_eq!(saved["configContents"], "model = \"gpt-5.4\"\n");
-        assert_eq!(saved["authContents"], "{\"OPENAI_API_KEY\":\"sk-test\"}");
-    }
-
-    #[test]
-    fn chat_protocol_profile_roundtrip_migrates_upstream_base_url_out_of_config() {
-        let dir = temp_dir();
-        let store = SettingsStore::new(dir.join("settings.json"));
-        let settings = BackendSettings {
-            relay_profiles: vec![RelayProfile {
-                id: "relay-chat".to_string(),
-                name: "DeepSeek".to_string(),
-                protocol: RelayProtocol::ChatCompletions,
-                relay_mode: RelayMode::PureApi,
-                config_contents: r#"model = "deepseek-chat"
-codex_plus_chat_base_url = "https://api.deepseek.com"
-model_provider = "custom"
-
-[model_providers.custom]
-name = "custom"
-wire_api = "responses"
-requires_openai_auth = true
-base_url = "http://127.0.0.1:57321/v1"
-"#
-                .to_string(),
-                auth_contents: r#"{"OPENAI_API_KEY":"sk-test"}"#.to_string(),
-                ..RelayProfile::default()
-            }],
-            active_relay_id: "relay-chat".to_string(),
-            ..BackendSettings::default()
-        };
-
-        store.save(&settings).unwrap();
-        let loaded = store.load().unwrap();
-        let active = loaded.active_relay_profile();
-
-        assert_eq!(active.protocol, RelayProtocol::ChatCompletions);
-        assert_eq!(active.base_url, "https://api.deepseek.com");
-        assert_eq!(active.upstream_base_url, "https://api.deepseek.com");
-        assert_eq!(active.api_key, "sk-test");
-        assert!(!active.config_contents.contains("codex_plus_chat_base_url"));
-
-        let saved: Value =
-            serde_json::from_str(&std::fs::read_to_string(dir.join("settings.json")).unwrap())
-                .unwrap();
-        let profile = &saved["relayProfiles"][0];
-        assert!(profile.get("baseUrl").is_none());
-        assert_eq!(profile["upstreamBaseUrl"], "https://api.deepseek.com");
-        assert!(profile.get("apiKey").is_none());
-        assert!(
-            !profile["configContents"]
-                .as_str()
-                .unwrap()
-                .contains("codex_plus_chat_base_url")
-        );
-    }
-
-    #[test]
-    fn official_profile_without_mix_does_not_persist_api_config() {
-        let settings = BackendSettings {
-            relay_profiles: vec![RelayProfile {
-                id: "official".to_string(),
-                name: "官方".to_string(),
-                relay_mode: RelayMode::Official,
-                official_mix_api_key: false,
-                model: "gpt-5.5".to_string(),
-                base_url: "https://relay.example/v1".to_string(),
-                api_key: "sk-test".to_string(),
-                config_contents: r#"model = "gpt-5.5"
-model_provider = "custom"
-
-[model_providers.custom]
-requires_openai_auth = true
-"#
-                .to_string(),
-                auth_contents: r#"{"OPENAI_API_KEY":"sk-test"}"#.to_string(),
-                ..RelayProfile::default()
-            }],
-            active_relay_id: "official".to_string(),
-            ..BackendSettings::default()
-        };
-
-        let value = settings_to_object(&normalize_settings_config_sections(settings));
-        let profile = &value["relayProfiles"][0];
-        assert_eq!(profile["relayMode"], "official");
-        assert_eq!(profile["officialMixApiKey"], false);
-        assert_eq!(profile["configContents"], "");
-        assert_eq!(profile["authContents"], "");
-        assert!(profile.get("model").is_none());
-        assert!(profile.get("baseUrl").is_none());
-        assert!(profile.get("apiKey").is_none());
     }
 
     #[test]
@@ -996,8 +420,6 @@ requires_openai_auth = true
             "codexAppConversationView": true,
             "codexAppServiceTierControls": true,
             "codexGoalsEnabled": true,
-            "relayBaseUrl": "https://relay.example.test/v1",
-            "relayApiKey": "sk-relay",
             "codexExtraArgs": ["--force_high_performance_gpu", "", "  ", " --enable-gpu "],
             "cliWrapperApiKeyEnv": "",
             "unknownKey": "ignored"
@@ -1012,8 +434,6 @@ requires_openai_auth = true
         assert!(updated.codex_app_conversation_view);
         assert!(updated.codex_app_service_tier_controls);
         assert!(updated.codex_goals_enabled);
-        assert_eq!(updated.relay_base_url, "https://relay.example.test/v1");
-        assert_eq!(updated.relay_api_key, "sk-relay");
         assert_eq!(
             updated.codex_extra_args,
             vec![
@@ -1026,163 +446,6 @@ requires_openai_auth = true
         assert_eq!(updated.cli_wrapper_api_key, "old-key");
         assert_eq!(updated.cli_wrapper_api_key_env, "CUSTOM_OPENAI_API_KEY");
         assert_eq!(store.load().unwrap(), updated);
-    }
-
-    #[test]
-    fn settings_store_update_persists_launch_mode() {
-        let dir = temp_dir();
-        let store = SettingsStore::new(dir.join("settings.json"));
-
-        let updated = store.update(json!({"launchMode": "relay"})).unwrap();
-        let saved: Value =
-            serde_json::from_str(&std::fs::read_to_string(dir.join("settings.json")).unwrap())
-                .unwrap();
-
-        assert_eq!(updated.launch_mode, LaunchMode::Relay);
-        assert_eq!(saved["launchMode"], json!("relay"));
-    }
-
-    #[test]
-    fn settings_store_update_persists_relay_profiles_and_active_profile() {
-        let dir = temp_dir();
-        let store = SettingsStore::new(dir.join("settings.json"));
-
-        let updated = store
-            .update(json!({
-                "relayProfiles": [
-                    {
-                        "id": "relay-a",
-                        "name": "中转 A",
-                        "baseUrl": "https://relay-a.example/v1",
-                        "apiKey": "sk-a"
-                    },
-                    {
-                        "id": "relay-b",
-                        "name": "中转 B",
-                        "baseUrl": "https://relay-b.example/v1",
-                        "apiKey": "sk-b"
-                    }
-                ],
-                "activeRelayId": "relay-b",
-                "relayTestModel": "claude-sonnet-4"
-            }))
-            .unwrap();
-
-        let active = updated.active_relay_profile();
-        assert_eq!(updated.relay_profiles.len(), 2);
-        assert_eq!(active.id, "relay-b");
-        assert_eq!(active.name, "中转 B");
-        assert_eq!(updated.relay_test_model, "claude-sonnet-4");
-
-        let saved: Value =
-            serde_json::from_str(&std::fs::read_to_string(dir.join("settings.json")).unwrap())
-                .unwrap();
-        assert!(saved["relayProfiles"][1].get("baseUrl").is_none());
-        assert!(saved["relayProfiles"][1].get("apiKey").is_none());
-    }
-
-    #[test]
-    fn settings_store_update_does_not_persist_relay_profile_derived_fields() {
-        let dir = temp_dir();
-        let store = SettingsStore::new(dir.join("settings.json"));
-
-        let updated = store
-            .update(json!({
-                "relayProfiles": [
-                    {
-                        "id": "relay-a",
-                        "name": "供应商 A",
-                        "model": "gpt-5.4",
-                        "baseUrl": "https://relay.example/v1",
-                        "apiKey": "sk-a",
-                        "configContents": "model = \"gpt-5.4\"\n",
-                        "authContents": "{\"OPENAI_API_KEY\":\"sk-a\"}"
-                    }
-                ],
-                "activeRelayId": "relay-a"
-            }))
-            .unwrap();
-
-        assert_eq!(updated.relay_profiles[0].id, "relay-a");
-        assert_eq!(updated.relay_profiles[0].name, "供应商 A");
-
-        let saved: Value =
-            serde_json::from_str(&std::fs::read_to_string(dir.join("settings.json")).unwrap())
-                .unwrap();
-        let saved_profile = &saved["relayProfiles"][0];
-        assert!(saved_profile.get("model").is_none());
-        assert!(saved_profile.get("baseUrl").is_none());
-        assert!(saved_profile.get("apiKey").is_none());
-        assert_eq!(saved_profile["configContents"], "model = \"gpt-5.4\"\n");
-        assert_eq!(
-            saved_profile["authContents"],
-            "{\"OPENAI_API_KEY\":\"sk-a\"}"
-        );
-    }
-
-    #[test]
-    fn settings_store_update_moves_context_tables_out_of_common_config() {
-        let dir = temp_dir();
-        let store = SettingsStore::new(dir.join("settings.json"));
-
-        let updated = store
-            .update(json!({
-                "relayCommonConfigContents": "[mcp_servers.context7]\ncommand = \"npx\"\n"
-            }))
-            .unwrap();
-
-        assert!(updated.relay_common_config_contents.is_empty());
-        assert_eq!(
-            updated.relay_context_config_contents,
-            "[mcp_servers.context7]\ncommand = \"npx\"\n"
-        );
-        assert_eq!(store.load().unwrap(), updated);
-    }
-
-    #[test]
-    fn settings_store_update_extracts_context_config_from_common_config() {
-        let dir = temp_dir();
-        let store = SettingsStore::new(dir.join("settings.json"));
-
-        let updated = store
-            .update(json!({
-                "relayCommonConfigContents": "model_reasoning_effort = \"high\"\n\n[mcp_servers.context7]\ncommand = \"npx\"\n\n[plugins.\"superpowers@openai-curated\"]\nenabled = true\n"
-            }))
-            .unwrap();
-
-        assert_eq!(
-            updated.relay_common_config_contents,
-            "model_reasoning_effort = \"high\"\n"
-        );
-        assert!(
-            updated
-                .relay_context_config_contents
-                .contains("[mcp_servers.context7]")
-        );
-        assert!(
-            updated
-                .relay_context_config_contents
-                .contains("[plugins.\"superpowers@openai-curated\"]")
-        );
-        assert_eq!(store.load().unwrap(), updated);
-    }
-
-    #[test]
-    fn active_relay_profile_uses_legacy_single_relay_when_profiles_are_default() {
-        let settings = BackendSettings {
-            relay_base_url: "https://legacy.example/v1".to_string(),
-            relay_api_key: "sk-legacy".to_string(),
-            ..BackendSettings::default()
-        };
-
-        let active = settings.active_relay_profile();
-
-        assert_eq!(active.id, "default");
-        assert_eq!(active.name, "默认中转");
-        assert_eq!(active.base_url, "https://legacy.example/v1");
-        assert_eq!(active.api_key, "sk-legacy");
-        assert_eq!(active.relay_mode, RelayMode::MixedApi);
-        assert!(active.official_mix_api_key);
     }
 
     #[test]

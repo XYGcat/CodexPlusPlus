@@ -35,12 +35,11 @@ fn bridge_script_defines_expected_globals_and_binding() {
 }
 
 #[test]
-fn injection_script_prefixes_helper_url_and_sponsor_images() {
+fn injection_script_prefixes_helper_url_and_version() {
     let script = assets::injection_script(57321);
 
     assert!(script.contains("window.__CODEX_SESSION_DELETE_HELPER__"));
     assert!(script.contains("http://127.0.0.1:57321"));
-    assert!(script.contains("window.__CODEX_PLUS_SPONSOR_IMAGES__"));
     assert!(script.contains("window.__CODEX_PLUS_VERSION__"));
     assert!(script.contains(codex_plus_core::version::VERSION));
     assert!(script.contains("https://discord.gg/y96kX7A76v"));
@@ -82,22 +81,6 @@ fn injection_script_times_out_backend_bridge_calls_and_falls_back_to_helper() {
 }
 
 #[test]
-fn injection_script_explains_plugin_patch_is_unneeded_in_relay_mode() {
-    let script = assets::injection_script(57321);
-
-    assert!(script.contains("兼容增强模式下无需开启"));
-}
-
-#[test]
-fn injection_script_skips_plugin_patch_work_in_relay_mode() {
-    let script = assets::injection_script(57321);
-
-    assert!(script.contains("function pluginPatchDisabledInRelayMode()"));
-    assert!(script.contains("!codexPlusBackendSettingsLoaded"));
-    assert!(script.contains("if (pluginPatchDisabledInRelayMode()) return"));
-    assert!(script.contains("clearPluginPatchArtifacts()"));
-}
-
 #[test]
 fn injection_script_unlocks_nested_disabled_plugin_install_buttons() {
     let script = assets::injection_script(57321);
@@ -160,24 +143,6 @@ fn injection_script_keeps_session_action_buttons_in_pr_style() {
     assert!(script.contains("background: transparent;"));
     assert!(script.contains("background: #363839;"));
     assert!(script.contains("cursor: default;"));
-}
-
-#[test]
-fn injection_script_unlocks_custom_model_catalog() {
-    let script = assets::injection_script(57321);
-
-    assert!(script.contains("/codex-model-catalog"));
-    assert!(script.contains("codexModelCatalog"));
-    assert!(script.contains("patchModelArray"));
-    assert!(script.contains("patchStatsigModelDynamicConfig"));
-    assert!(script.contains("patchModelJsonResponse"));
-    assert!(script.contains("installAppServerModelRequestPatch"));
-    assert!(script.contains("list-models-for-host"));
-    assert!(script.contains("appServerModelRequestMethod"));
-    assert!(script.contains("send-cli-request-for-host"));
-    assert!(script.contains("Response.prototype.json"));
-    assert!(script.contains("available_models"));
-    assert!(script.contains("modelWhitelistUnlock"));
 }
 
 #[test]

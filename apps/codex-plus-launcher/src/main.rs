@@ -234,13 +234,6 @@ impl LaunchHooks for LauncherHooks {
         Ok(())
     }
 
-    async fn apply_active_relay_profile(
-        &self,
-        settings: &codex_plus_core::settings::BackendSettings,
-    ) -> anyhow::Result<()> {
-        self.core.apply_active_relay_profile(settings).await
-    }
-
     async fn start_helper(&self, helper_port: u16) -> anyhow::Result<()> {
         self.core.start_helper(helper_port).await
     }
@@ -479,14 +472,6 @@ impl BridgeRuntimeService for LauncherRuntimeService {
 
     async fn repair_backend(&self) -> anyhow::Result<Value> {
         self.backend_status().await
-    }
-
-    async fn codex_model_catalog(&self) -> anyhow::Result<Value> {
-        Ok(codex_plus_core::model_catalog::read_codex_model_catalog().await)
-    }
-
-    async fn ads(&self) -> anyhow::Result<Value> {
-        codex_plus_core::ads::fetch_ad_list().await
     }
 
     async fn zed_remote_status(&self) -> anyhow::Result<Value> {
