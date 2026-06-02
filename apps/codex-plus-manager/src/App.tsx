@@ -5,7 +5,6 @@ import {
   CheckCircle2,
   CircleArrowUp,
   Download,
-  Edit3,
   Info,
   ExternalLink,
   Hammer,
@@ -13,13 +12,10 @@ import {
   MessageCircle,
   FileCode2,
   Moon,
-  Network,
   Power,
   PowerOff,
-  Plus,
   RefreshCw,
   Rocket,
-  Save,
   Settings,
   Sun,
   Trash2,
@@ -76,7 +72,6 @@ type BackendSettings = {
   enhancementsEnabled: boolean;
   codexAppPluginEntryUnlock: boolean;
   codexAppForcePluginInstall: boolean;
-  codexAppModelWhitelistUnlock: boolean;
   codexAppSessionDelete: boolean;
   codexAppMarkdownExport: boolean;
   codexAppProjectMove: boolean;
@@ -92,23 +87,6 @@ type BackendSettings = {
   cliWrapperBaseUrl: string;
   cliWrapperApiKey: string;
   cliWrapperApiKeyEnv: string;
-};
-
-type ContextKind = "mcp" | "skill" | "plugin";
-
-type CodexContextEntry = {
-  id: string;
-  kind: ContextKind;
-  title: string;
-  summary: string;
-  tomlBody: string;
-  enabled: boolean;
-};
-
-type CodexContextEntries = {
-  mcpServers: CodexContextEntry[];
-  skills: CodexContextEntry[];
-  plugins: CodexContextEntry[];
 };
 
 const SCRIPT_MARKET_REPOSITORY_URL = "https://github.com/BigPizzaV3/CodexPlusPlusScriptMarket";
@@ -157,15 +135,6 @@ type DeleteLocalSessionResult = CommandResult<{
   message: string;
   undo_token: string | null;
   backup_path: string | null;
-}>;
-
-type ContextEntriesResult = CommandResult<{
-  settings: BackendSettings;
-  entries: CodexContextEntries;
-}>;
-
-type LiveContextEntriesResult = CommandResult<{
-  entries: CodexContextEntries;
 }>;
 
 type SettingsBackfillResult = CommandResult<{
@@ -258,13 +227,12 @@ type StartupResult = CommandResult<{
   showUpdate: boolean;
 }>;
 
-type Route = "overview" | "sessions" | "context" | "enhance" | "userScripts" | "maintenance" | "about" | "settings";
+type Route = "overview" | "sessions" | "enhance" | "userScripts" | "maintenance" | "about" | "settings";
 type Theme = "dark" | "light";
 
 const routes: Array<{ id: Route; label: string; icon: LucideIcon }> = [
   { id: "overview", label: "概览", icon: LayoutDashboard },
   { id: "sessions", label: "会话管理", icon: MessageCircle },
-  { id: "context", label: "工具与插件", icon: Network },
   { id: "enhance", label: "页面增强", icon: Hammer },
   { id: "userScripts", label: "脚本市场", icon: FileCode2 },
   { id: "maintenance", label: "安装维护", icon: Wrench },
@@ -280,7 +248,6 @@ const defaultSettings: BackendSettings = {
   enhancementsEnabled: true,
   codexAppPluginEntryUnlock: true,
   codexAppForcePluginInstall: true,
-  codexAppModelWhitelistUnlock: true,
   codexAppSessionDelete: true,
   codexAppMarkdownExport: true,
   codexAppProjectMove: true,
@@ -305,7 +272,6 @@ export function App() {
   const [overview, setOverview] = useState<OverviewResult | null>(null);
   const [settings, setSettings] = useState<SettingsResult | null>(null);
   const [localSessions, setLocalSessions] = useState<LocalSessionsResult | null>(null);
-  const [liveContextEntries, setLiveContextEntries] = useState<CodexContextEntries | null>(null);
   const [logs, setLogs] = useState<LogsResult | null>(null);
   const [diagnostics, setDiagnostics] = useState<DiagnosticsResult | null>(null);
   const [watcher, setWatcher] = useState<WatcherResult | null>(null);
@@ -420,24 +386,6 @@ export function App() {
     }
   };
 
-  const refreshLiveContextEntries = async (silent = false) => {
-    const result = await run(() => call<LiveContextEntriesResult>("read_live_context_entries"));
-    if (result) {
-      setLiveContextEntries(result.entries);
-      if (!silent || !isSuccessStatus(result.status)) showResultNotice("工具与插件", result, { silentSuccess: true });
-    }
-    return result;
-  };
-
-  const syncLiveContextEntries = async (next: BackendSettings, silent = false) => {
-    const result = await run(() => call<LiveContextEntriesResult>("sync_live_context_entries", { request: { settings: next } }));
-    if (result) {
-      setLiveContextEntries(result.entries);
-      if (!silent || !isSuccessStatus(result.status)) showResultNotice("工具与插件", result, { silentSuccess: true });
-    }
-    return result;
-  };
-
   const refreshLogs = async (silent = false) => {
     const result = await run(() => call<LogsResult>("read_latest_logs", { request: { lines: 240 } }));
     if (result) {
@@ -468,10 +416,6 @@ export function App() {
     if (next === "sessions") {
       await refreshSettings(true);
       await refreshLocalSessions(true);
-    }
-    if (next === "context") {
-      await refreshSettings(true);
-      await refreshLiveContextEntries(true);
     }
     if (next === "settings") await refreshSettings(true);
     if (next === "userScripts") {
@@ -647,43 +591,6 @@ export function App() {
   };
 
 
-  const upsertContextEntry = async (next: BackendSettings, kind: ContextKind, id: string, tomlBody: string) => {
-    const result = await run(() =>
-      call<ContextEntriesResult>("upsert_context_entry", {
-        request: { settings: next, kind, id, tomlBody },
-      }),
-    );
-    if (!result) return null;
-    let normalized = normalizeSettings(result.settings);
-    const saveResult = await run(() => call<SettingsResult>("save_settings", { settings: normalized }));
-    if (saveResult) {
-      setSettings(saveResult);
-      normalized = normalizeSettings(saveResult.settings);
-    }
-    setSettingsForm(normalized);
-    if (!isSuccessStatus(result.status)) showResultNotice("工具与插件", result);
-    return normalized;
-  };
-
-  const deleteContextEntry = async (next: BackendSettings, kind: ContextKind, id: string) => {
-    const result = await run(() =>
-      call<ContextEntriesResult>("delete_context_entry", {
-        request: { settings: next, kind, id },
-      }),
-    );
-    if (!result) return null;
-    let normalized = normalizeSettings(result.settings);
-    const saveResult = await run(() => call<SettingsResult>("save_settings", { settings: normalized }));
-    if (saveResult) {
-      setSettings(saveResult);
-      normalized = normalizeSettings(saveResult.settings);
-    }
-    setSettingsForm(normalized);
-    if (!isSuccessStatus(result.status)) showResultNotice("工具与插件", result);
-    return normalized;
-  };
-
-
   const copyText = async (text: string, message: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -801,8 +708,6 @@ export function App() {
         }
       },
       syncProvidersNow,
-      refreshLiveContextEntries,
-      syncLiveContextEntries,
       importCcsProviders,
       refreshScriptMarket,
       installMarketScript,
@@ -811,8 +716,6 @@ export function App() {
       refreshLocalSessions,
       deleteLocalSession,
       openExternalUrl,
-      upsertContextEntry,
-      deleteContextEntry,
       refreshLogs,
       refreshDiagnostics,
       showMessage: async (title: string, message: string, status?: Status) => showNotice(title, message, status),
@@ -919,14 +822,6 @@ export function App() {
               actions={actions}
             />
           ) : null}
-          {route === "context" ? (
-            <ContextScreen
-              form={settingsForm}
-              liveEntries={liveContextEntries}
-              onFormChange={setSettingsForm}
-              actions={actions}
-            />
-          ) : null}
           {route === "enhance" ? (
             <EnhanceScreen form={settingsForm} onFormChange={setSettingsForm} actions={actions} />
           ) : null}
@@ -978,8 +873,6 @@ type Actions = {
   clearCodexAppPath: () => Promise<void>;
   saveManualCodexAppPath: () => Promise<void>;
   syncProvidersNow: () => Promise<void>;
-  refreshLiveContextEntries: () => Promise<LiveContextEntriesResult | null>;
-  syncLiveContextEntries: (settings: BackendSettings, silent?: boolean) => Promise<LiveContextEntriesResult | null>;
   importCcsProviders: () => Promise<void>;
   refreshScriptMarket: () => Promise<void>;
   installMarketScript: (id: string) => Promise<void>;
@@ -988,13 +881,6 @@ type Actions = {
   refreshLocalSessions: () => Promise<LocalSessionsResult | null>;
   deleteLocalSession: (session: LocalSession) => Promise<void>;
   openExternalUrl: (url: string) => Promise<void>;
-  upsertContextEntry: (
-    settings: BackendSettings,
-    kind: ContextKind,
-    id: string,
-    tomlBody: string,
-  ) => Promise<BackendSettings | null>;
-  deleteContextEntry: (settings: BackendSettings, kind: ContextKind, id: string) => Promise<BackendSettings | null>;
   refreshLogs: () => Promise<void>;
   refreshDiagnostics: () => Promise<void>;
   showMessage: (title: string, message: string, status?: Status) => Promise<void>;
@@ -1106,7 +992,6 @@ function EnhanceScreen({
           <div className="feature-switch-grid">
             <FeatureToggle title="插件入口解锁" detail="显示并启用 Codex 插件入口；官方/混合模式通常不需要。" checked={form.codexAppPluginEntryUnlock} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppPluginEntryUnlock", value)} />
             <FeatureToggle title="特殊插件强制安装" detail="解除 App unavailable / 应用不可用导致的前端安装禁用。" checked={form.codexAppForcePluginInstall} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppForcePluginInstall", value)} />
-            <FeatureToggle title="模型白名单解锁" detail="从环境变量和 config.toml 的 /v1/models 拉取模型并补进模型列表。" checked={form.codexAppModelWhitelistUnlock} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppModelWhitelistUnlock", value)} />
             <FeatureToggle title="Fast 按钮" detail="显示服务模式切换按钮，可控制 Standard / Fast / priority。" checked={form.codexAppServiceTierControls} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppServiceTierControls", value)} />
             <FeatureToggle title="会话删除" detail="在会话列表悬停显示删除按钮，并支持撤销。" checked={form.codexAppSessionDelete} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppSessionDelete", value)} />
             <FeatureToggle title="Markdown 导出" detail="在会话列表显示导出按钮，导出带时间戳的 Markdown。" checked={form.codexAppMarkdownExport} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppMarkdownExport", value)} />
@@ -1629,213 +1514,6 @@ function MarketScriptCard({ script, actions }: { script: ScriptMarketItem; actio
   );
 }
 
-function ContextScreen({
-  form,
-  liveEntries,
-  onFormChange,
-  actions,
-}: {
-  form: BackendSettings;
-  liveEntries: CodexContextEntries | null;
-  onFormChange: (value: BackendSettings) => void;
-  actions: Actions;
-}) {
-  return (
-    <Panel fill>
-      <CardHead title="Codex 工具与插件" detail="独立管理 Codex 的 MCP、Skills、Plugins；切换任意供应商都会带上。" />
-      <CardContent>
-        <ContextManager
-          form={normalizeSettings(form)}
-          liveEntries={liveEntries}
-          onFormChange={onFormChange}
-          actions={actions}
-        />
-      </CardContent>
-    </Panel>
-  );
-}
-
-function ContextManager({
-  form,
-  liveEntries,
-  onFormChange,
-  actions,
-}: {
-  form: BackendSettings;
-  liveEntries: CodexContextEntries | null;
-  onFormChange: (value: BackendSettings) => void;
-  actions: Actions;
-}) {
-  const entries = contextEntriesWithLiveEntries(form, liveEntries);
-  const [activeKind, setActiveKind] = useState<ContextKind>("mcp");
-  const [editor, setEditor] = useState<{ kind: ContextKind; entry?: CodexContextEntry } | null>(null);
-  const visibleEntries = contextEntriesByKind(entries, activeKind);
-  const label = contextKindLabel(activeKind);
-
-  const saveEntry = async (kind: ContextKind, id: string, tomlBody: string) => {
-    const next = await actions.upsertContextEntry(form, kind, id, tomlBody);
-    if (!next) return;
-    onFormChange(next);
-    setEditor(null);
-  };
-
-  const toggleContextEntryEnabled = async (entry: CodexContextEntry) => {
-    const nextBody = setContextEntryEnabled(entry.tomlBody, !entry.enabled);
-    const next = await actions.upsertContextEntry(form, entry.kind, entry.id, nextBody);
-    if (!next) return;
-    onFormChange(next);
-    const syncResult = await actions.syncLiveContextEntries(next, true);
-    if (syncResult && isSuccessStatus(syncResult.status)) {
-      // context entries synced
-    }
-  };
-
-  const deleteEntry = async (entry: CodexContextEntry) => {
-    const next = await actions.deleteContextEntry(form, entry.kind, entry.id);
-    if (!next) return;
-    onFormChange(next);
-  };
-
-  return (
-    <div className="context-panel">
-      <div className="context-head">
-        <div>
-          <strong>Codex 工具与插件</strong>
-          <span>MCP、Skills、Plugins 作为全局配置独立管理，切换任意供应商都会合并。</span>
-        </div>
-        <div className="context-head-actions">
-          <Button onClick={() => setEditor({ kind: activeKind })} size="sm" variant="secondary">
-            <Plus className="h-4 w-4" />
-            新增{label}
-          </Button>
-        </div>
-      </div>
-      <div className="segmented">
-        {contextKindOptions.map((option) => (
-          <button
-            className={activeKind === option.kind ? "active" : ""}
-            key={option.kind}
-            onClick={() => setActiveKind(option.kind)}
-            type="button"
-          >
-            <span>{option.label}</span>
-            <small>{contextEntriesByKind(entries, option.kind).length}</small>
-          </button>
-        ))}
-      </div>
-      <div className="context-summary">
-        当前共有 {visibleEntries.length} 个{label}；这些条目独立于供应商保存，会写入所有供应商切换后的 config.toml。
-      </div>
-      <div className="context-list">
-        {visibleEntries.length ? (
-          visibleEntries.map((entry) => (
-            <div className="context-row" key={`${entry.kind}-${entry.id}`}>
-              <strong className="context-title">{entry.title || entry.id}</strong>
-              <div className="context-actions">
-                <button
-                  aria-checked={entry.enabled}
-                  aria-label={`contextEnabledSwitch-${entry.kind}-${entry.id}`}
-                  className={`context-enabled-switch ${entry.enabled ? "active" : ""}`}
-                  onClick={() => void toggleContextEntryEnabled(entry)}
-                  role="switch"
-                  title={entry.enabled ? "禁用此扩展项" : "启用此扩展项"}
-                  type="button"
-                >
-                  <span className="context-switch-track" aria-hidden="true">
-                    <span className="context-switch-thumb" />
-                  </span>
-                </button>
-                <Button onClick={() => setEditor({ kind: entry.kind, entry })} size="icon" title="编辑扩展项" variant="ghost">
-                  <Edit3 className="h-4 w-4" />
-                </Button>
-                <Button
-                  className="context-delete"
-                  onClick={() => void deleteEntry(entry)}
-                  size="icon"
-                  title="删除扩展项"
-                  variant="ghost"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="empty">暂无{label}，可以从通用配置文件或这里新增。</div>
-        )}
-      </div>
-      {editor ? (
-        <ContextEntryEditor
-          entry={editor.entry}
-          kind={editor.kind}
-          onCancel={() => setEditor(null)}
-          onSave={(kind, id, tomlBody) => void saveEntry(kind, id, tomlBody)}
-        />
-      ) : null}
-    </div>
-  );
-}
-
-function ContextEntryEditor({
-  kind,
-  entry,
-  onCancel,
-  onSave,
-}: {
-  kind: ContextKind;
-  entry?: CodexContextEntry;
-  onCancel: () => void;
-  onSave: (kind: ContextKind, id: string, tomlBody: string) => void;
-}) {
-  const [draftKind, setDraftKind] = useState<ContextKind>(entry?.kind ?? kind);
-  const [id, setId] = useState(entry?.id ?? "");
-  const [tomlBody, setTomlBody] = useState(entry?.tomlBody ?? "");
-  const canSave = id.trim().length > 0;
-
-  return (
-    <div className="context-editor">
-      <div className="context-editor-fields">
-        <Field label="类型">
-          <select
-            className="field-select"
-            disabled={!!entry}
-            value={draftKind}
-            onChange={(event) => setDraftKind(event.currentTarget.value as ContextKind)}
-          >
-            {contextKindOptions.map((option) => (
-              <option key={option.kind} value={option.kind}>{option.label}</option>
-            ))}
-          </select>
-        </Field>
-        <Field label="ID">
-          <Input
-            disabled={!!entry}
-            value={id}
-            onChange={(event) => setId(event.currentTarget.value.trim())}
-            placeholder="例如 context7"
-          />
-        </Field>
-      </div>
-      <Field label="TOML 配置体">
-        <Textarea
-          className="context-editor-textarea"
-          value={tomlBody}
-          onChange={(event) => setTomlBody(event.currentTarget.value)}
-          placeholder={'只填写表头下面的内容，例如：\ncommand = "npx"\nargs = ["-y", "@upstash/context7-mcp"]'}
-          spellCheck={false}
-        />
-      </Field>
-      <Toolbar>
-        <Button disabled={!canSave} onClick={() => onSave(draftKind, id.trim(), tomlBody)} size="sm">
-          <Save className="h-4 w-4" />
-          保存扩展项
-        </Button>
-        <Button onClick={onCancel} size="sm" variant="secondary">取消</Button>
-      </Toolbar>
-    </div>
-  );
-}
-
 function SyncedTextarea({
   value,
   onValueChange,
@@ -2084,7 +1762,6 @@ function routeSubtitle(route: Route) {
   const subtitles: Record<Route, string> = {
     overview: "检查问题、启动与快速修复",
     sessions: "查看、删除和修复 Codex 本地会话",
-    context: "独立管理 MCP、Skills、Plugins",
     enhance: "会话删除、导出、项目移动和脚本能力",
     userScripts: "内置和用户自定义脚本清单",
     maintenance: "入口安装、修复、Watcher 与手动启动",
@@ -2092,153 +1769,6 @@ function routeSubtitle(route: Route) {
     settings: "主题、命令包装器和启动参数",
   };
   return subtitles[route];
-}
-
-const contextKindOptions: Array<{ kind: ContextKind; label: string; tableName: string }> = [
-  { kind: "mcp", label: "MCP", tableName: "mcp_servers" },
-  { kind: "skill", label: "Skills", tableName: "skills" },
-  { kind: "plugin", label: "插件", tableName: "plugins" },
-];
-
-function contextKindLabel(kind: ContextKind) {
-  return contextKindOptions.find((option) => option.kind === kind)?.label ?? "扩展项";
-}
-
-function contextEntriesFromSettings(_settings: BackendSettings): CodexContextEntries {
-  return {
-    mcpServers: [],
-    skills: [],
-    plugins: [],
-  };
-}
-
-function contextEntriesWithLiveEntries(settings: BackendSettings, liveEntries: CodexContextEntries | null): CodexContextEntries {
-  const commonEntries = contextEntriesFromSettings(settings);
-  if (!liveEntries) return commonEntries;
-  const liveByKind: Record<ContextKind, Map<string, CodexContextEntry>> = {
-    mcp: new Map(liveEntries.mcpServers.map((entry) => [entry.id, entry])),
-    skill: new Map(liveEntries.skills.map((entry) => [entry.id, entry])),
-    plugin: new Map(liveEntries.plugins.map((entry) => [entry.id, entry])),
-  };
-  return {
-    mcpServers: mergeLiveContextEntries(commonEntries.mcpServers, liveByKind.mcp),
-    skills: mergeLiveContextEntries(commonEntries.skills, liveByKind.skill),
-    plugins: mergeLiveContextEntries(commonEntries.plugins, liveByKind.plugin),
-  };
-}
-
-function mergeLiveContextEntries(entries: CodexContextEntry[], liveEntries: Map<string, CodexContextEntry>): CodexContextEntry[] {
-  const uniqueEntries = dedupeContextEntryList(entries);
-  const merged = uniqueEntries.map((entry) => {
-    const live = liveEntries.get(entry.id);
-    return withLiveEntryState(entry, live);
-  });
-  const knownIds = new Set(uniqueEntries.map((entry) => entry.id));
-  for (const liveEntry of liveEntries.values()) {
-    if (!knownIds.has(liveEntry.id)) merged.push(liveEntry);
-  }
-  return merged;
-}
-
-function withLiveEntryState(entry: CodexContextEntry, live?: CodexContextEntry): CodexContextEntry {
-  return live ? { ...entry, enabled: live.enabled } : { ...entry, enabled: false };
-}
-
-function contextEntriesFromConfig(configContents: string): CodexContextEntries {
-  return {
-    mcpServers: parseContextEntries(configContents, "mcp", "mcp_servers"),
-    skills: parseContextEntries(configContents, "skill", "skills"),
-    plugins: parseContextEntries(configContents, "plugin", "plugins"),
-  };
-}
-
-function mergeContextEntries(primary: CodexContextEntries, secondary: CodexContextEntries): CodexContextEntries {
-  return {
-    mcpServers: mergeContextEntryList(primary.mcpServers, secondary.mcpServers),
-    skills: mergeContextEntryList(primary.skills, secondary.skills),
-    plugins: mergeContextEntryList(primary.plugins, secondary.plugins),
-  };
-}
-
-function mergeContextEntryList(primary: CodexContextEntry[], secondary: CodexContextEntry[]): CodexContextEntry[] {
-  return dedupeContextEntryList([...primary, ...secondary]);
-}
-
-function dedupeContextEntryList(entries: CodexContextEntry[]): CodexContextEntry[] {
-  const byId = new Map<string, CodexContextEntry>();
-  for (const entry of entries) {
-    byId.set(entry.id, entry);
-  }
-  return Array.from(byId.values());
-}
-
-function parseContextEntries(commonConfig: string, kind: ContextKind, tableName: string): CodexContextEntry[] {
-  const escapedTable = tableName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const headerPattern = new RegExp(`^\\s*\\[${escapedTable}\\.([^\\]]+)\\]\\s*$`);
-  const anyHeaderPattern = /^\s*\[[^\]]+\]\s*$/;
-  const entries = new Map<string, CodexContextEntry>();
-  let currentId: string | null = null;
-  let body: string[] = [];
-
-  const flush = () => {
-    if (!currentId) return;
-    const tomlBody = ensureTrailingNewline(body.join("\n").trimEnd());
-    entries.set(currentId, {
-      id: currentId,
-      kind,
-      title: currentId,
-      summary: contextEntrySummary(tomlBody),
-      tomlBody,
-      enabled: contextEntryEnabled(tomlBody),
-    });
-  };
-
-  for (const line of commonConfig.split(/\r?\n/)) {
-    const match = line.match(headerPattern);
-    if (match) {
-      flush();
-      currentId = unquoteTomlKey(match[1].trim());
-      body = [];
-      continue;
-    }
-    if (currentId && anyHeaderPattern.test(line)) {
-      flush();
-      currentId = null;
-      body = [];
-      continue;
-    }
-    if (currentId) body.push(line);
-  }
-  flush();
-
-  return Array.from(entries.values());
-}
-
-function contextEntrySummary(tomlBody: string) {
-  return tomlBody
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .find((line) => line && !line.startsWith("#") && !/^enabled\s*=/.test(line))
-    ?.slice(0, 96) ?? "";
-}
-
-function contextEntryEnabled(tomlBody: string) {
-  return !tomlBody.split(/\r?\n/).some((line) => /^\s*enabled\s*=\s*false\s*(#.*)?$/i.test(line));
-}
-
-function setContextEntryEnabled(tomlBody: string, enabled: boolean) {
-  const lines = tomlBody.trimEnd().split(/\r?\n/);
-  const nextValue = `enabled = ${enabled ? "true" : "false"}`;
-  let replaced = false;
-  const next = lines.map((line) => {
-    if (/^\s*enabled\s*=/.test(line)) {
-      replaced = true;
-      return nextValue;
-    }
-    return line;
-  });
-  if (!replaced) next.unshift(nextValue);
-  return ensureTrailingNewline(next.join("\n").trimEnd());
 }
 
 function ensureTrailingNewline(value: string) {
@@ -2250,12 +1780,6 @@ function unquoteTomlKey(key: string) {
     return key.slice(1, -1);
   }
   return key;
-}
-
-function contextEntriesByKind(entries: CodexContextEntries, kind: ContextKind): CodexContextEntry[] {
-  if (kind === "mcp") return dedupeContextEntryList(entries.mcpServers);
-  if (kind === "skill") return dedupeContextEntryList(entries.skills);
-  return dedupeContextEntryList(entries.plugins);
 }
 
 function configHasCodexGoalsFeature(configContents: string): boolean {
@@ -2323,140 +1847,12 @@ function setCodexGoalsFeatureInConfig(configContents: string, enabled: boolean):
   return ensureTrailingNewline(next.join("\n").trimEnd());
 }
 
-function selectedContextConfigToml(entries: CodexContextEntries): string {
-  const sections: string[] = [];
-  for (const option of contextKindOptions) {
-    for (const entry of dedupeContextEntryList(contextEntriesByKind(entries, option.kind))) {
-      if (!entry.enabled) continue;
-      sections.push(`[${option.tableName}.${tomlKey(entry.id)}]\n${entry.tomlBody.trimEnd()}`);
-    }
-  }
-  return ensureTrailingNewline(sections.join("\n\n"));
-}
-
-function allContextConfigToml(entries: CodexContextEntries): string {
-  const sections: string[] = [];
-  for (const option of contextKindOptions) {
-    for (const entry of dedupeContextEntryList(contextEntriesByKind(entries, option.kind))) {
-      sections.push(`[${option.tableName}.${tomlKey(entry.id)}]\n${entry.tomlBody.trimEnd()}`);
-    }
-  }
-  return ensureTrailingNewline(sections.join("\n\n"));
-}
-
-function syncLiveConfigContextState(liveConfigContents: string, settings: BackendSettings): string {
-  const entries = contextEntriesFromSettings(settings);
-  const withoutContext = stripAllContextEntriesFromConfig(liveConfigContents);
-  return joinTomlSectionsRootFirst([withoutContext, selectedContextConfigToml(entries)]);
-}
-
-function splitContextConfigText(configContents: string): { common: string; context: string } {
-  const entries = contextEntriesFromConfig(configContents);
-  return {
-    common: stripContextEntriesFromConfig(configContents, entries),
-    context: allContextConfigToml(entries),
-  };
-}
-
-function stripContextEntriesFromConfig(configContents: string, entries: CodexContextEntries): string {
-  const knownIds: Record<ContextKind, Set<string>> = {
-    mcp: new Set(entries.mcpServers.map((entry) => entry.id)),
-    skill: new Set(entries.skills.map((entry) => entry.id)),
-    plugin: new Set(entries.plugins.map((entry) => entry.id)),
-  };
-  const lines = configContents.split(/\r?\n/);
-  const kept: string[] = [];
-  let skipping = false;
-
-  for (const line of lines) {
-    const contextHeader = contextHeaderFromLine(line);
-    if (contextHeader) {
-      skipping = knownIds[contextHeader.kind].has(contextHeader.id);
-    } else if (/^\s*\[[^\]]+\]\s*$/.test(line)) {
-      skipping = false;
-    }
-    if (!skipping) kept.push(line);
-  }
-
-  return ensureTrailingNewline(kept.join("\n").trimEnd());
-}
-
-function stripAllContextEntriesFromConfig(configContents: string): string {
-  const lines = configContents.split(/\r?\n/);
-  const kept: string[] = [];
-  let skipping = false;
-
-  for (const line of lines) {
-    const contextHeader = contextHeaderFromLine(line);
-    if (contextHeader) {
-      skipping = true;
-    } else if (/^\s*\[[^\]]+\]\s*$/.test(line)) {
-      skipping = false;
-    }
-    if (!skipping) kept.push(line);
-  }
-
-  return ensureTrailingNewline(kept.join("\n").trimEnd());
-}
-
-function stripCommonConfigTextFallback(configContents: string, commonConfig: string): string {
-  const anchors = commonConfigAnchors(commonConfig);
-  if (!anchors.rootKeys.size && !anchors.tableHeaders.size) return ensureTrailingNewline(configContents.trimEnd());
-
-  const kept: string[] = [];
-  let skippingTable = false;
-
-  for (const line of configContents.split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (/^\[[^\]]+\]$/.test(trimmed)) {
-      skippingTable = anchors.tableHeaders.has(trimmed);
-      if (skippingTable) continue;
-    }
-    if (skippingTable) continue;
-    const key = tomlRootKeyFromLine(trimmed);
-    if (key && anchors.rootKeys.has(key)) continue;
-    kept.push(line);
-  }
-
-  return ensureTrailingNewline(kept.join("\n").trimEnd());
-}
-
-function commonConfigAnchors(commonConfig: string): { rootKeys: Set<string>; tableHeaders: Set<string> } {
-  const rootKeys = new Set<string>();
-  const tableHeaders = new Set<string>();
-  let inRoot = true;
-
-  for (const line of commonConfig.split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (/^\[[^\]]+\]$/.test(trimmed)) {
-      inRoot = false;
-      tableHeaders.add(trimmed);
-      continue;
-    }
-    if (inRoot) {
-      const key = tomlRootKeyFromLine(trimmed);
-      if (key) rootKeys.add(key);
-    }
-  }
-
-  return { rootKeys, tableHeaders };
-}
-
 function tomlRootKeyFromLine(line: string): string | null {
   if (!line || line.startsWith("#")) return null;
   const index = line.indexOf("=");
   if (index < 0) return null;
   const key = line.slice(0, index).trim();
   return key || null;
-}
-
-function contextHeaderFromLine(line: string): { kind: ContextKind; id: string } | null {
-  for (const option of contextKindOptions) {
-    const escapedTable = option.tableName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const match = new RegExp(`^\\s*\\[${escapedTable}\\.([^\\]]+)\\]\\s*$`).exec(line);
-    if (match) return { kind: option.kind, id: unquoteTomlKey(match[1].trim()) };
-  }
-  return null;
 }
 
 function removeRootTomlKey(contents: string, key: string): string {

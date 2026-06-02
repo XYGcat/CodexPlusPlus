@@ -35,12 +35,11 @@ fn bridge_script_defines_expected_globals_and_binding() {
 }
 
 #[test]
-fn injection_script_prefixes_helper_url_and_sponsor_images() {
+fn injection_script_prefixes_helper_url_and_version() {
     let script = assets::injection_script(57321);
 
     assert!(script.contains("window.__CODEX_SESSION_DELETE_HELPER__"));
     assert!(script.contains("http://127.0.0.1:57321"));
-    assert!(script.contains("window.__CODEX_PLUS_SPONSOR_IMAGES__"));
     assert!(script.contains("window.__CODEX_PLUS_VERSION__"));
     assert!(script.contains(codex_plus_core::version::VERSION));
     assert!(script.contains("https://discord.gg/y96kX7A76v"));
@@ -144,24 +143,6 @@ fn injection_script_keeps_session_action_buttons_in_pr_style() {
     assert!(script.contains("background: transparent;"));
     assert!(script.contains("background: #363839;"));
     assert!(script.contains("cursor: default;"));
-}
-
-#[test]
-fn injection_script_unlocks_custom_model_catalog() {
-    let script = assets::injection_script(57321);
-
-    assert!(script.contains("/codex-model-catalog"));
-    assert!(script.contains("codexModelCatalog"));
-    assert!(script.contains("patchModelArray"));
-    assert!(script.contains("patchStatsigModelDynamicConfig"));
-    assert!(script.contains("patchModelJsonResponse"));
-    assert!(script.contains("installAppServerModelRequestPatch"));
-    assert!(script.contains("list-models-for-host"));
-    assert!(script.contains("appServerModelRequestMethod"));
-    assert!(script.contains("send-cli-request-for-host"));
-    assert!(script.contains("Response.prototype.json"));
-    assert!(script.contains("available_models"));
-    assert!(script.contains("modelWhitelistUnlock"));
 }
 
 #[test]

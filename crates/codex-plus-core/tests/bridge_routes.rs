@@ -33,8 +33,6 @@ async fn bridge_routes_cover_all_current_paths() {
         ("/manager/open", json!({})),
         ("/backend/status", json!({})),
         ("/backend/repair", json!({})),
-        ("/codex-model-catalog", json!({})),
-        ("/codex-config-model", json!({})),
         ("/zed-remote/status", json!({})),
         (
             "/zed-remote/resolve-host",
@@ -800,7 +798,6 @@ impl BridgeSettingsService for FakeSettings {
         for key in [
             "codexAppPluginEntryUnlock",
             "codexAppForcePluginInstall",
-            "codexAppModelWhitelistUnlock",
             "codexAppSessionDelete",
             "codexAppMarkdownExport",
             "codexAppProjectMove",
@@ -891,18 +888,6 @@ impl BridgeRuntimeService for FakeRuntime {
         Ok(
             json!({"status": "ok", "message": "后端已修复", "version": codex_plus_core::version::VERSION}),
         )
-    }
-
-    async fn codex_model_catalog(&self) -> anyhow::Result<Value> {
-        Ok(json!({
-            "status": "ok",
-            "model": "qwen3-coder",
-            "default_model": "qwen3-coder",
-            "model_provider": "relay",
-            "provider_name": "Relay",
-            "models": ["qwen3-coder"],
-            "sources": []
-        }))
     }
 
     async fn zed_remote_status(&self) -> anyhow::Result<Value> {

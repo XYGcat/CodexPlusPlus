@@ -8,7 +8,6 @@ pub mod diagnostic_log;
 pub mod http_client;
 pub mod install;
 pub mod launcher;
-pub mod model_catalog;
 pub mod models;
 pub mod paths;
 pub mod ports;

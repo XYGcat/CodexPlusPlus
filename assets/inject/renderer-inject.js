@@ -61,7 +61,6 @@
   const codexThreadServiceTierMaxEntries = 120;
   const codexThreadServiceTierDraftBindWindowMs = 60 * 1000;
   const codexServiceTierRequestOverrideVersion = "2";
-  const codexAppServerModelRequestPatchVersion = "1";
   const codexThreadScrollMaxEntries = 120;
   const codexThreadScrollSaveThrottleMs = 120;
   const codexThreadScrollRestoreWindowMs = 3200;
@@ -552,7 +551,7 @@
         pointer-events: auto;
         -webkit-app-region: no-drag;
       }
-      .codex-plus-modal-content[data-codex-plus-active-tab="support"] { width: min(820px, calc(100vw - 48px)); }
+      .codex-plus-modal-content[data-codex-plus-active-tab="userScripts"] { width: min(820px, calc(100vw - 48px)); }
       .codex-plus-modal-header {
         display: flex;
         align-items: center;
@@ -730,11 +729,6 @@
       .codex-plus-user-script-error { margin-top: 2px; color: #f87171; font-size: 11px; word-break: break-all; }
       .codex-plus-user-script-actions { display: grid; justify-items: end; gap: 8px; min-width: 120px; }
       .codex-plus-user-script-reload { border: 1px solid rgba(255,255,255,.18); border-radius: 7px; background: #3f3f46; color: #f3f4f6; font: 12px system-ui, sans-serif; padding: 6px 8px; }
-      .codex-plus-sponsor-text { color: #d1d5db; font-size: 13px; line-height: 1.55; margin: 4px 0 12px; }
-      .codex-plus-sponsor-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-      .codex-plus-sponsor-card { border: 1px solid rgba(255,255,255,.1); border-radius: 12px; padding: 10px; background: rgba(255,255,255,.04); text-align: center; }
-      .codex-plus-sponsor-card-title { color: #f3f4f6; font-size: 13px; margin-bottom: 8px; }
-      .codex-plus-sponsor-qr { display: block; width: 100%; max-width: 340px; border-radius: 8px; margin: 0 auto; background: white; }
       .${timelineClass} {
         position: fixed;
         top: calc(72px + 12px);
@@ -814,13 +808,12 @@
   }
 
   function defaultCodexPlusSettings() {
-    return { pluginEntryUnlock: true, forcePluginInstall: true, modelWhitelistUnlock: true, sessionDelete: true, markdownExport: true, projectMove: true, conversationTimeline: true, conversationView: false, conversationViewMaxWidth: conversationViewDefaultWidth, threadScrollRestore: true, zedRemoteOpen: true, upstreamWorktreeCreate: true, nativeMenuPlacement: true, serviceTierControls: false };
+    return { pluginEntryUnlock: true, forcePluginInstall: true, sessionDelete: true, markdownExport: true, projectMove: true, conversationTimeline: true, conversationView: false, conversationViewMaxWidth: conversationViewDefaultWidth, threadScrollRestore: true, zedRemoteOpen: true, upstreamWorktreeCreate: true, nativeMenuPlacement: true, serviceTierControls: false };
   }
 
   const codexPlusBackendSettingMap = {
     pluginEntryUnlock: "codexAppPluginEntryUnlock",
     forcePluginInstall: "codexAppForcePluginInstall",
-    modelWhitelistUnlock: "codexAppModelWhitelistUnlock",
     sessionDelete: "codexAppSessionDelete",
     markdownExport: "codexAppMarkdownExport",
     projectMove: "codexAppProjectMove",
@@ -848,7 +841,6 @@
       return {
         pluginEntryUnlock: false,
         forcePluginInstall: false,
-        modelWhitelistUnlock: false,
         sessionDelete: false,
         markdownExport: false,
         projectMove: false,
@@ -1711,7 +1703,6 @@
         <div class="codex-plus-tabs" role="tablist" aria-label="Codex++">
           <button type="button" class="codex-plus-tab-button" data-codex-plus-tab="home" data-active="true">主页</button>
           <button type="button" class="codex-plus-tab-button" data-codex-plus-tab="userScripts" data-active="false">用户脚本</button>
-          <button type="button" class="codex-plus-tab-button" data-codex-plus-tab="support" data-active="false">请作者喝咖啡</button>
         </div>
         <div class="codex-plus-modal-body">
           <div class="codex-plus-panel" data-codex-plus-panel="home">
@@ -1733,10 +1724,6 @@
             <div class="codex-plus-row">
               <div><div class="codex-plus-row-title">特殊插件强制安装</div><div class="codex-plus-row-description">"解除 App unavailable / 应用不可用导致的前端安装禁用。"</div></div>
               <button type="button" class="codex-plus-toggle" data-codex-plus-setting="forcePluginInstall"><span></span></button>
-            </div>
-            <div class="codex-plus-row">
-              <div><div class="codex-plus-row-title">模型白名单解锁</div><div class="codex-plus-row-description">从环境变量和 Codex config.toml 中的中转站 /v1/models 拉取模型，并补进模型选择列表。</div></div>
-              <button type="button" class="codex-plus-toggle" data-codex-plus-setting="modelWhitelistUnlock"><span></span></button>
             </div>
             <div class="codex-plus-row">
               <div><div class="codex-plus-row-title">Fast 按钮</div><div class="codex-plus-row-description">显示服务模式切换按钮，并允许把请求切到 Fast / priority；默认关闭以避免误触高价服务模式。</div></div>
@@ -1842,19 +1829,6 @@
               <div class="codex-plus-user-script-actions">
                 <button type="button" class="codex-plus-toggle" data-codex-user-scripts-enabled="true"><span></span></button>
                 <button type="button" class="codex-plus-user-script-reload" data-codex-user-scripts-reload="true">重新加载用户脚本</button>
-              </div>
-            </div>
-          </div>
-          <div class="codex-plus-panel" data-codex-plus-panel="support" hidden>
-            <div class="codex-plus-sponsor-text">如果 Codex++ 帮到了你，可以请我喝杯咖啡，或者随手赞赏支持一下继续维护。</div>
-            <div class="codex-plus-sponsor-grid">
-              <div class="codex-plus-sponsor-card">
-                <div class="codex-plus-sponsor-card-title">支付宝</div>
-                <img class="codex-plus-sponsor-qr" src="${window.__CODEX_PLUS_SPONSOR_IMAGES__?.alipay || `${helperBase}/assets/sponsor-alipay.jpg`}" alt="支付宝赞赏码">
-              </div>
-              <div class="codex-plus-sponsor-card">
-                <div class="codex-plus-sponsor-card-title">微信</div>
-                <img class="codex-plus-sponsor-qr" src="${window.__CODEX_PLUS_SPONSOR_IMAGES__?.wechat || `${helperBase}/assets/sponsor-wechat.jpg`}" alt="微信赞赏码">
               </div>
             </div>
           </div>
@@ -3170,416 +3144,6 @@
 
   function uniqueValues(values) {
     return Array.from(new Set(values.filter((value) => typeof value === "string" && value.trim().length > 0)));
-  }
-
-  let codexModelCatalog = { status: "loading", model: "", default_model: "", model_provider: "", provider_name: "", models: [], sources: [], responses_api: { status: "unknown", message: "" } };
-  let codexModelCatalogLoadedAt = 0;
-  let codexModelCatalogPromise = null;
-  const codexPlusModelListRequestIds = new Set();
-
-  function codexPlusModelUnlockEnabled() {
-    return !!codexPlusSettings().modelWhitelistUnlock;
-  }
-
-  function codexPlusModelNames() {
-    return uniqueValues([
-      codexModelCatalog.default_model,
-      codexModelCatalog.model,
-      ...(Array.isArray(codexModelCatalog.models) ? codexModelCatalog.models : []),
-    ]);
-  }
-
-  async function loadCodexModelCatalog(force = false) {
-    if (!force && codexModelCatalogPromise) return codexModelCatalogPromise;
-    if (!force && codexModelCatalogLoadedAt && Date.now() - codexModelCatalogLoadedAt < 10000) return codexModelCatalog;
-    codexModelCatalogPromise = postJson("/codex-model-catalog", {})
-      .then((result) => {
-        codexModelCatalog = result && typeof result === "object" ? result : { status: "failed", model: "", default_model: "", model_provider: "", provider_name: "", models: [], sources: [], responses_api: { status: "unknown", message: "" } };
-        codexModelCatalogLoadedAt = Date.now();
-        renderCodexPlusMenu();
-        patchCodexModelWhitelist();
-        return codexModelCatalog;
-      })
-      .catch((error) => {
-        codexModelCatalog = { status: "failed", message: String(error?.message || error), model: "", default_model: "", model_provider: "", provider_name: "", models: [], sources: [], responses_api: { status: "unknown", message: "" } };
-        codexModelCatalogLoadedAt = Date.now();
-        return codexModelCatalog;
-      })
-      .finally(() => {
-        codexModelCatalogPromise = null;
-      });
-    return codexModelCatalogPromise;
-  }
-
-  function modelReasoningEfforts() {
-    return ["minimal", "low", "medium", "high", "xhigh"].map((reasoningEffort) => ({ reasoningEffort, description: `${reasoningEffort} effort` }));
-  }
-
-  function codexPlusModelDescriptor(modelName) {
-    return {
-      model: modelName,
-      id: modelName,
-      slug: modelName,
-      name: modelName,
-      displayName: modelName,
-      description: codexModelCatalog.provider_name || codexModelCatalog.model_provider || "Custom model",
-      hidden: false,
-      isDefault: (codexModelCatalog.default_model || codexModelCatalog.model) === modelName,
-      defaultReasoningEffort: "medium",
-      supportedReasoningEfforts: modelReasoningEfforts(),
-    };
-  }
-
-  function modelArrayLooksPatchable(value, allowEmpty = false) {
-    return Array.isArray(value)
-      && (allowEmpty || value.length > 0)
-      && value.every((item) => item && typeof item === "object" && typeof item.model === "string");
-  }
-
-  function stringArrayLooksPatchable(value) {
-    return Array.isArray(value) && value.every((item) => typeof item === "string");
-  }
-
-  function patchModelNameArray(models) {
-    if (!stringArrayLooksPatchable(models)) return false;
-    const customModels = codexPlusModelNames();
-    if (!customModels.length) return false;
-    let changed = false;
-    customModels.forEach((modelName) => {
-      if (!models.includes(modelName)) {
-        models.push(modelName);
-        changed = true;
-      }
-    });
-    return changed;
-  }
-
-  function patchModelArray(models, allowEmpty = false) {
-    if (!modelArrayLooksPatchable(models, allowEmpty)) return false;
-    const customModels = codexPlusModelNames();
-    if (!customModels.length) return false;
-    let changed = false;
-    const existing = new Map(models.map((item) => [item.model, item]));
-    models.forEach((item) => {
-      if (customModels.includes(item.model) && item.hidden !== false) {
-        item.hidden = false;
-        changed = true;
-      }
-    });
-    customModels.forEach((modelName) => {
-      if (!existing.has(modelName)) {
-        models.push(codexPlusModelDescriptor(modelName));
-        changed = true;
-      }
-    });
-    return changed;
-  }
-
-  function patchModelContainer(value) {
-    if (!value || typeof value !== "object") return false;
-    let changed = false;
-    if (patchModelArray(value.models, "defaultModel" in value || "availableModels" in value)) changed = true;
-    if (patchModelNameArray(value.models)) changed = true;
-    if (patchModelArray(value.data)) changed = true;
-    if (patchModelArray(value.result)) changed = true;
-    if (patchModelArray(value.pages?.[0]?.data)) changed = true;
-    if (patchModelArray(value.result?.data)) changed = true;
-    if (patchModelArray(value.result?.models)) changed = true;
-    if (patchModelArray(value.message?.result?.data)) changed = true;
-    if (patchModelArray(value.message?.result?.models)) changed = true;
-    const names = codexPlusModelNames();
-    if (value.availableModels instanceof Set) {
-      names.forEach((name) => {
-        if (!value.availableModels.has(name)) {
-          value.availableModels.add(name);
-          changed = true;
-        }
-      });
-    }
-    if (value.available_models instanceof Set) {
-      names.forEach((name) => {
-        if (!value.available_models.has(name)) {
-          value.available_models.add(name);
-          changed = true;
-        }
-      });
-    }
-    if (Array.isArray(value.availableModels)) {
-      names.forEach((name) => {
-        if (!value.availableModels.includes(name)) {
-          value.availableModels.push(name);
-          changed = true;
-        }
-      });
-    }
-    if (Array.isArray(value.available_models)) {
-      names.forEach((name) => {
-        if (!value.available_models.includes(name)) {
-          value.available_models.push(name);
-          changed = true;
-        }
-      });
-    }
-    if (Array.isArray(value.hiddenModels)) {
-      const before = value.hiddenModels.length;
-      value.hiddenModels = value.hiddenModels.filter((name) => !names.includes(name));
-      if (value.hiddenModels.length !== before) changed = true;
-    }
-    if (Array.isArray(value.hidden_models)) {
-      const before = value.hidden_models.length;
-      value.hidden_models = value.hidden_models.filter((name) => !names.includes(name));
-      if (value.hidden_models.length !== before) changed = true;
-    }
-    if (value.defaultModel == null && names.length > 0) {
-      value.defaultModel = codexPlusModelDescriptor(names[0]);
-      changed = true;
-    } else if (typeof value.defaultModel === "string" && names.includes(value.defaultModel) && value.model == null) {
-      value.model = value.defaultModel;
-      changed = true;
-    }
-    return changed;
-  }
-
-  async function patchModelJsonResponse(payload) {
-    if (!codexPlusModelUnlockEnabled()) return payload;
-    if (!codexPlusModelNames().length) await loadCodexModelCatalog();
-    if (!payload || typeof payload !== "object") return payload;
-    try {
-      patchModelContainer(payload);
-      patchObjectGraphForModels(payload, new WeakSet(), 0);
-    } catch (error) {
-      window.__codexPlusModelPatchFailures = window.__codexPlusModelPatchFailures || [];
-      window.__codexPlusModelPatchFailures.push(String(error?.stack || error));
-    }
-    return payload;
-  }
-
-  function installModelJsonResponsePatch() {
-    if (window.__codexPlusModelJsonResponsePatchInstalled === "1") return;
-    window.__codexPlusModelJsonResponsePatchInstalled = "1";
-    window.__codexPlusModelJsonResponseOriginals = window.__codexPlusModelJsonResponseOriginals || {};
-    const originals = window.__codexPlusModelJsonResponseOriginals;
-    originals.responseJson = originals.responseJson || Response.prototype.json;
-    if (typeof originals.responseJson !== "function") return;
-    Response.prototype.json = async function codexPlusPatchedResponseJson(...args) {
-      const payload = await originals.responseJson.apply(this, args);
-      return await patchModelJsonResponse(payload);
-    };
-  }
-
-  function patchStatsigModelDynamicConfig(config) {
-    const names = codexPlusModelNames();
-    const value = config?.value;
-    if (!names.length || !value || typeof value !== "object") return config;
-    const availableModels = Array.isArray(value.available_models) ? [...value.available_models] : [];
-    let changed = false;
-    names.forEach((name) => {
-      if (!availableModels.includes(name)) {
-        availableModels.push(name);
-        changed = true;
-      }
-    });
-    const nextValue = {
-      ...value,
-      available_models: availableModels,
-      default_model: names[0] || value.default_model,
-    };
-    if (!changed && nextValue.default_model === value.default_model) return config;
-    try {
-      config.value = nextValue;
-    } catch {
-      return { ...config, value: nextValue };
-    }
-    return config;
-  }
-
-  function statsigClients() {
-    const root = window.__STATSIG__ || globalThis.__STATSIG__;
-    if (!root || typeof root !== "object") return [];
-    const clients = [root.firstInstance, typeof root.instance === "function" ? root.instance() : null];
-    if (root.instances && typeof root.instances === "object") clients.push(...Object.values(root.instances));
-    return clients.filter((client, index, array) => client && typeof client === "object" && array.indexOf(client) === index);
-  }
-
-  function patchStatsigModelWhitelist() {
-    statsigClients().forEach((client) => {
-      if (typeof client.getDynamicConfig !== "function") return;
-      if (!client.__codexPlusModelWhitelistPatched) {
-        const originalGetDynamicConfig = client.getDynamicConfig.bind(client);
-        client.getDynamicConfig = (name, options) => {
-          const result = originalGetDynamicConfig(name, options);
-          return patchStatsigModelDynamicConfig(result);
-        };
-        client.__codexPlusModelWhitelistPatched = true;
-      }
-      try {
-        patchStatsigModelDynamicConfig(client.getDynamicConfig("107580212", { disableExposureLog: true }));
-      } catch {
-      }
-    });
-  }
-
-  function patchObjectGraphForModels(root, visited, depth = 0) {
-    if (!root || typeof root !== "object" || visited.has(root) || depth > 5) return false;
-    visited.add(root);
-    let changed = patchModelContainer(root);
-    if (root instanceof Element || root === window || root === document || root === document.body || root === document.documentElement) return changed;
-    for (const key of Object.keys(root)) {
-      if (key === "ownerDocument" || key === "parentElement" || key === "parentNode" || key === "children" || key === "childNodes") continue;
-      let value;
-      try {
-        value = root[key];
-      } catch {
-        continue;
-      }
-      if (value && typeof value === "object" && patchObjectGraphForModels(value, visited, depth + 1)) changed = true;
-    }
-    return changed;
-  }
-
-  function reactFiberKeys(element) {
-    return Object.keys(element).filter((key) => key.startsWith("__reactFiber") || key.startsWith("__reactInternalInstance") || key.startsWith("__reactProps"));
-  }
-
-  function patchReactModelState() {
-    const visited = new WeakSet();
-    const nodes = [document.body, ...document.querySelectorAll("button, [role='menu'], [role='dialog'], [data-radix-popper-content-wrapper]")].filter(Boolean);
-    let changed = false;
-    for (const node of nodes.slice(0, 220)) {
-      for (const key of reactFiberKeys(node)) {
-        if (patchObjectGraphForModels(node[key], visited)) changed = true;
-      }
-    }
-    return changed;
-  }
-
-  function patchAppServerModelMessages() {
-    if (window.__codexPlusModelMessagePatchInstalled) return;
-    window.__codexPlusModelMessagePatchInstalled = true;
-    const originalDispatchEvent = window.dispatchEvent;
-    window.dispatchEvent = function patchedCodexPlusDispatchEvent(event) {
-      try {
-        const detail = event?.detail;
-        const request = detail?.request;
-        if (event?.type === "codex-message-from-view" && detail?.type === "mcp-request" && request?.method === "model/list") {
-          request.params = { ...(request.params || {}), includeHidden: true };
-          if (request.id != null) codexPlusModelListRequestIds.add(String(request.id));
-        }
-        if (event?.type === "message") patchMcpModelResponseData(event.data);
-      } catch (error) {
-        window.__codexPlusModelPatchFailures = window.__codexPlusModelPatchFailures || [];
-        window.__codexPlusModelPatchFailures.push(String(error?.stack || error));
-      }
-      return originalDispatchEvent.call(this, event);
-    };
-
-    window.addEventListener("message", (event) => {
-      try {
-        patchMcpModelResponseData(event?.data);
-      } catch (error) {
-        window.__codexPlusModelPatchFailures = window.__codexPlusModelPatchFailures || [];
-        window.__codexPlusModelPatchFailures.push(String(error?.stack || error));
-      }
-    }, true);
-  }
-
-  function patchMcpModelResponseData(data) {
-    if (data?.type !== "mcp-response") return false;
-    const message = data.message || data.response;
-    const requestId = message?.id != null ? String(message.id) : "";
-    if (codexPlusModelListRequestIds.size > 0 && !codexPlusModelListRequestIds.has(requestId)) return false;
-    codexPlusModelListRequestIds.delete(requestId);
-    return patchModelContainer(data) || patchModelContainer(message) || patchModelContainer(message?.result) || patchModelContainer(message?.result?.data);
-  }
-
-  function appServerModelRequestMethod(method, params) {
-    if (method === "send-cli-request-for-host" && params?.method) return String(params.method);
-    return String(method || "");
-  }
-
-  function patchAppServerModelResult(method, result) {
-    if (method !== "list-models-for-host") return result;
-    try {
-      if (Array.isArray(result)) patchModelArray(result, true);
-      if (Array.isArray(result?.data)) patchModelArray(result.data, true);
-      if (Array.isArray(result?.models)) patchModelArray(result.models, true);
-      patchModelContainer(result);
-      patchObjectGraphForModels(result, new WeakSet(), 0);
-      sendCodexPlusDiagnostic("model_app_server_result_patched", {
-        method,
-        modelCount: Array.isArray(result?.data) ? result.data.length : Array.isArray(result?.models) ? result.models.length : Array.isArray(result) ? result.length : null,
-      });
-    } catch (error) {
-      window.__codexPlusModelPatchFailures = window.__codexPlusModelPatchFailures || [];
-      window.__codexPlusModelPatchFailures.push(String(error?.stack || error));
-    }
-    return result;
-  }
-
-  function patchAppServerModelRequestClient(client) {
-    if (!client || typeof client.sendRequest !== "function") return false;
-    if (client.__codexPlusModelRequestPatch === codexAppServerModelRequestPatchVersion) return true;
-    const originalSendRequest = client.__codexPlusModelOriginalSendRequest || client.sendRequest.bind(client);
-    client.__codexPlusModelOriginalSendRequest = originalSendRequest;
-    client.sendRequest = async function codexPlusModelPatchedSendRequest(method, params, options) {
-      const result = await originalSendRequest(method, params, options);
-      if (!codexPlusModelUnlockEnabled()) return result;
-      if (!codexPlusModelNames().length) await loadCodexModelCatalog();
-      return patchAppServerModelResult(appServerModelRequestMethod(String(method || ""), params), result);
-    };
-    client.__codexPlusModelRequestPatch = codexAppServerModelRequestPatchVersion;
-    return true;
-  }
-
-  function installAppServerModelRequestPatch() {
-    if (window.__codexPlusAppServerModelRequestPatchInstalled === codexAppServerModelRequestPatchVersion) return;
-    const patch = async () => {
-      try {
-        const module = await loadCodexAppModule("app-server-manager-signals-");
-        const candidates = Object.values(module).filter((value) => value && typeof value === "object");
-        let patchedCount = 0;
-        for (const candidate of candidates) {
-          if (patchAppServerModelRequestClient(candidate)) patchedCount += 1;
-          if (typeof candidate.sendRequest !== "function" && typeof candidate.get === "function") {
-            try {
-              if (patchAppServerModelRequestClient(candidate.get())) patchedCount += 1;
-            } catch {
-            }
-          }
-        }
-        if (patchedCount > 0) {
-          window.__codexPlusAppServerModelRequestPatchInstalled = codexAppServerModelRequestPatchVersion;
-          sendCodexPlusDiagnostic("model_app_server_request_patch_installed", {
-            candidateCount: candidates.length,
-            patchedCount,
-          });
-        } else {
-          sendCodexPlusDiagnostic("model_app_server_request_patch_not_found", {
-            exportCount: Object.keys(module || {}).length,
-            candidateCount: candidates.length,
-          });
-        }
-      } catch (error) {
-        sendCodexPlusDiagnostic("model_app_server_request_patch_failed", {
-          errorName: error?.name || "",
-          errorMessage: error?.message || String(error),
-        });
-      }
-    };
-    void patch();
-  }
-
-  function patchCodexModelWhitelist() {
-    if (!codexPlusModelUnlockEnabled()) return;
-    installModelJsonResponsePatch();
-    patchAppServerModelMessages();
-    installAppServerModelRequestPatch();
-    if (!codexPlusModelNames().length) {
-      loadCodexModelCatalog();
-      return;
-    }
-    patchStatsigModelWhitelist();
-    patchReactModelState();
   }
 
   function threadIdVariants(sessionId) {
@@ -6211,10 +5775,7 @@
   }
 
   function codexServiceTierKnownProviderNames() {
-    return uniqueValues([
-      codexModelCatalog.provider_name,
-      codexModelCatalog.model_provider,
-    ]).map((value) => value.toLowerCase());
+    return [];
   }
 
   function codexServiceTierLooksLikeProviderButton(button, providerNames) {
@@ -7197,7 +6758,6 @@
     refreshConversationView();
     installCodexServiceTierBadge();
     scheduleThreadScrollSync();
-    patchCodexModelWhitelist();
   }
 
   function runScanStep(step) {

@@ -593,95 +593,6 @@ body {
   font-weight: 600;
 }
 
-.context-title {
-  min-width: 0;
-  overflow: hidden;
-  color: hsl(var(--foreground));
-  font-size: 13px;
-  line-height: 1.35;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.context-enabled-switch {
-  display: inline-flex;
-  width: 46px;
-  height: 30px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid hsl(var(--border));
-  border-radius: 999px;
-  background: hsl(var(--secondary) / 0.55);
-  color: hsl(var(--muted-foreground));
-  cursor: pointer;
-  padding: 0;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease;
-}
-
-.context-enabled-switch.active {
-  border-color: hsl(var(--primary));
-  background: hsl(var(--primary) / 0.2);
-  color: hsl(var(--foreground));
-}
-
-.context-enabled-switch:hover {
-  border-color: hsl(var(--primary));
-  color: hsl(var(--foreground));
-}
-
-.context-switch-track {
-  position: relative;
-  display: inline-flex;
-  width: 28px;
-  height: 16px;
-  flex: 0 0 auto;
-  border-radius: 999px;
-  background: hsl(var(--muted-foreground) / 0.28);
-  transition: background 0.15s ease;
-}
-
-.context-switch-thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: hsl(var(--background));
-  box-shadow: 0 1px 3px hsl(var(--foreground) / 0.25);
-  transition: transform 0.15s ease;
-}
-
-.context-enabled-switch.active .context-switch-track {
-  background: hsl(var(--primary));
-}
-
-.context-enabled-switch.active .context-switch-thumb {
-  transform: translateX(12px);
-}
-
-.context-editor {
-  display: grid;
-  gap: 10px;
-  border-top: 1px solid hsl(var(--border));
-  padding-top: 12px;
-}
-
-.context-editor-fields {
-  display: grid;
-  grid-template-columns: minmax(120px, 0.4fr) minmax(0, 1fr);
-  gap: 10px;
-}
-
-.context-editor-textarea {
-  min-height: 160px;
-  font-family: Consolas, "SFMono-Regular", monospace;
-  font-size: 12px;
-  line-height: 1.45;
-}
 
 .mode-grid {
   display: grid;
@@ -1029,8 +940,7 @@ body {
 
 .log-lines:focus-within,
 .log-view:focus-visible,
-.launch-args-input:focus-visible,
-.context-editor-textarea:focus-visible {
+.launch-args-input:focus-visible {
   box-shadow: 0 0 0 3px hsl(var(--ring) / 0.14);
 }
 
@@ -1375,7 +1285,6 @@ body {
   .form-row,
   .feature-switch-grid,
   .segmented,
-  .context-editor-fields,
   .mode-grid,
   .mode-grid.three,
   .hero-layout {
