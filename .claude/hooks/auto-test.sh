@@ -7,7 +7,8 @@ file=$(echo "$input" | jq -r '.tool_input.file_path // empty' 2>/dev/null || tru
 
 if [[ -z "$file" || "$file" != *.rs ]]; then exit 0; fi
 
-cd "$CLAUDE_CWD"
+project_dir="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$project_dir"
 
 # Extract crate name from path (crates/codex-plus-core/src/foo.rs → codex-plus-core)
 crate=""

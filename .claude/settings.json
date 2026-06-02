@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/auto-format.sh"
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/auto-format.sh\""
           }
         ]
       },
@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/auto-test.sh"
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/auto-test.sh\""
           }
         ]
       }

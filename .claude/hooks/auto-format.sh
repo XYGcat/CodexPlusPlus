@@ -8,12 +8,14 @@ file=$(echo "$input" | jq -r '.tool_input.file_path // empty' 2>/dev/null || tru
 
 if [[ -z "$file" ]]; then exit 0; fi
 
+project_dir="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
+
 case "$file" in
   *.rs)
-    cd "$CLAUDE_CWD" && cargo fmt --quiet 2>/dev/null || true
+    cd "$project_dir" && cargo fmt --quiet 2>/dev/null || true
     ;;
   *.ts|*.tsx)
-    manager_dir="$CLAUDE_CWD/apps/codex-plus-manager"
+    manager_dir="$project_dir/apps/codex-plus-manager"
     if [[ -f "$manager_dir/package.json" ]]; then
       cd "$manager_dir" && npx prettier --write "$file" 2>/dev/null || true
     fi
