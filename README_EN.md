@@ -1,7 +1,7 @@
 # Codex++
 
 <p align="center">
-  <img src="docs/images/codex-plus-plus.png" alt="Codex++ icon" width="160">
+  <img src="docs/images/codex-plus-plus.png" alt="Codex++ Icon" width="160">
 </p>
 
 <p align="center">
@@ -16,215 +16,143 @@
   <img alt="Tauri" src="https://img.shields.io/badge/tauri-2.x-24C8DB">
 </p>
 
-Codex++ is an external enhancement launcher and manager for the Codex App. It does not modify the original Codex installation. Instead, it starts Codex externally and injects enhancements through the Chromium DevTools Protocol.
+Codex++ is an external enhancement launcher and management tool for the Codex App. It does not modify Codex's original files — instead, it injects enhancement scripts via Chromium DevTools Protocol to add features that Codex does not natively support.
 
-## Quick Start
+## Installation
 
-Download the latest installer from [GitHub Releases](https://github.com/BigPizzaV3/CodexPlusPlus/releases):
+Download the latest installer from [GitHub Releases](https://github.com/XYGcat/CodexPlusPlus/releases):
 
 - Windows: `CodexPlusPlus-*-windows-x64-setup.exe`
 - macOS Intel: `CodexPlusPlus-*-macos-x64.dmg`
 - macOS Apple Silicon: `CodexPlusPlus-*-macos-arm64.dmg`
 
-After installation, two entry points are available:
+Two entry points are created after installation:
 
-- `Codex++`: a silent launcher. It does not show the manager UI and only starts Codex with Codex++ injection.
-- `Codex++ Manager`: a Tauri control panel for launch, diagnostics, repair, updates, enhancements, and user scripts.
+- **Codex++** — Silent launcher that starts Codex and injects enhancements, no UI
+- **Codex++ Manager** — Tauri control panel for configuring enhancements, managing scripts, and checking updates
 
-The Windows installer creates desktop and Start Menu shortcuts. The macOS DMG installs `/Applications/Codex++.app` and `/Applications/Codex++ 管理工具.app`.
+## Features
 
-## Sponsors
+### Enhancements
 
-<p align="center">
-  <a href="mailto:1727532@qq.com">Want to be shown below?</a>
-</p>
-<table>
-  <tr>
-    <th width="180">🏆 Sponsor 🏆</th>
-    <th>Introduction</th>
-  </tr>
-  <tr>
-    <td align="center">
-      <a href="https://jojocode.com/">
-        <img src="docs/images/sponsor-jojocode.svg" alt="JOJO Code" width="150">
-      </a>
-    </td>
-    <td><a href="https://jojocode.com/"><strong>JOJO Code | Official Codex++ Relay</strong></a><br>Thanks to JOJO Code for sponsoring this project! JOJO Code is the official Codex++ relay service. It is built for daily development and team collaboration, providing stable Codex API access for quick onboarding, long-term use, and project workflows.</td>
-  </tr>
-  <tr>
-    <td align="center">
-      <a href="https://aigocode.com/invite/CodexPlusPlus">
-        <img src="docs/images/sponsor-aigocode.png" alt="AIGoCode" width="150">
-      </a>
-    </td>
-    <td><a href="https://aigocode.com/invite/CodexPlusPlus"><strong>AIGoCode</strong></a><br>Thanks to AIGoCode for sponsoring this project! AIGoCode is an all-in-one platform integrating the latest Claude Code, Codex, and Gemini models, providing stable, efficient, and cost-effective AI programming services. It offers flexible subscription plans, direct access in China, no extra network setup, and fast responses. AIGoCode provides a special benefit for CodexPlusPlus users: users who <a href="https://aigocode.com/invite/CodexPlusPlus">register through this link</a> can receive an extra 10% bonus credit on their first recharge.</td>
-  </tr>
-  <tr>
-    <td align="center">
-      <a href="https://www.packyapi.com/">
-        <img src="docs/images/sponsor-packycode.png" alt="PackyCode" width="150">
-      </a>
-    </td>
-    <td><a href="https://www.packyapi.com/"><strong>PackyCode</strong></a><br>Thanks to PackyCode for sponsoring this project! PackyCode is a stable and efficient API relay service provider, offering relay services for Claude Code, Codex, Gemini, and more. PackyCode provides a special discount for users of this software: register through this link and enter the "CodexPlusPlus" coupon code when recharging to get 10% off your first recharge.</td>
-  </tr>
-  <tr>
-    <td align="center">
-      <a href="https://apikey.fun/register?aff=CODEX">
-        <img src="docs/images/sponsor-apikey-fun.png" alt="APIKEY.FUN" width="150">
-      </a>
-    </td>
-    <td><a href="https://apikey.fun/register?aff=CODEX"><strong>APIKEY.FUN</strong></a><br>Thanks to APIKEY.FUN for sponsoring this project! APIKEY.FUN is an AI relay platform focused on open, stable, and cost-effective access to mainstream global models. It supports API relay services for Claude, OpenAI, Gemini, and other popular models, with prices as low as 7% of the official rate. Register through the dedicated link to receive up to a permanent 5% recharge discount.</td>
-  </tr>
-  <tr>
-    <td align="center">
-      <a href="https://runapi.co/register?aff=AWJq">
-        <img src="docs/images/sponsor-runapi.png" alt="RunAPI" width="150">
-      </a>
-    </td>
-    <td><a href="https://runapi.co/register?aff=AWJq"><strong>RunAPI</strong></a><br>Thanks to RunAPI for sponsoring this project! RunAPI is an efficient and stable OpenRouter alternative API platform. One API key can access OpenAI, Claude, Gemini, DeepSeek, Grok, and 150+ mainstream models at prices as low as 10% of the original rate, with seamless compatibility for tools such as Claude Code and OpenClaw.</td>
-  </tr>
-  <tr>
-    <td align="center">
-      <a href="https://www.0029.org/?promo=AFF11F">
-        <img src="docs/images/sponsor-0029.svg" alt="0029 Cloud Bridge" width="150">
-      </a>
-    </td>
-    <td><a href="https://www.0029.org/?promo=AFF11F"><strong>0029 Cloud Bridge | Codex API Relay Station (gpt5.5 gpt-image-2)</strong></a><br>Supports individual and enterprise access. Monthly plans and pay-as-you-go billing are available, with Pro/Plus account pools, stable site-wide APIs, and 24/7 technical support.</td>
-  </tr>
-  <tr>
-    <td align="center">
-      <a href="https://rawchat.cn">
-        <img src="docs/images/sponsor-rawchat.svg" alt="RawChat" width="150">
-      </a>
-    </td>
-    <td><a href="https://rawchat.cn"><strong>RawChat | Codex Relay Station</strong></a><br>A long-running relay station with monthly plans, low-rate usage, high cache hit rates, Pro/Plus account pools, and dedicated all-day maintenance.</td>
-  </tr>
-  <tr>
-    <td align="center">
-      <a href="https://coder.visioncoder.cn">
-        <img src="https://coder.visioncoder.cn/logo.png" alt="VisionCoder" width="110">
-      </a>
-    </td>
-    <td><a href="https://coder.visioncoder.cn"><strong>VisionCoder Developer Platform</strong></a><br>Thanks to VisionCoder for supporting this project. VisionCoder Developer Platform is a reliable and efficient API relay service provider, offering access to mainstream AI models such as Claude Code, Codex, and Gemini. It helps developers and teams integrate AI capabilities more easily and improve productivity. VisionCoder is also offering our users a limited-time <a href="https://coder.visioncoder.cn">Token Plan</a> promotion: buy 1 month and get 1 month free.</td>
-  </tr>
-</table>
+Controlled via the "Page Enhancements" menu in the manager. Enabled by default; disabling stops all Codex++ menu and script injection.
 
+| Feature | Description |
+|---|---|
+| Plugin Entry Unlock | Removes Codex's restriction on third-party plugin installation |
+| Force Plugin Install | Auto-installs unsigned or unverified plugins |
+| Session Delete | Adds delete support for local sessions (with undo) |
+| Markdown Export | Exports conversations as Markdown files |
+| Project Move | Migrates session working directories to other paths |
+| Conversation Timeline | Adds a timeline navigation bar on the right side of conversations |
+| Conversation View | Conversation view enhancements |
+| Thread Scroll Restore | Restores scroll position when switching sessions |
+| Zed Remote Open | Opens files in Zed editor from remote SSH contexts |
+| Upstream Worktree | Creates git worktrees from upstream branches with auto-fetch |
+| Native Menu Placement | Adjusts the Codex++ menu display position |
+| Service Tier Controls | Controls Codex service tier options |
 
-## Highlights
+### Script Market
 
-- Rust backend and silent launcher with no extra runtime requirement.
-- Tauri + React manager with dark/light theme support.
-- External CDP injection. No `app.asar` patching and no DLL writes into the Codex installation.
-- Traditional enhancement mode with plugin entry unlock, forced plugin install, session delete, Markdown export, project move, Timeline, and more.
-- Independent user script management with startup injection.
-- Provider Sync to keep historical sessions visible after switching providers.
-- Zed open entry detects remote SSH context and opens the matching remote file in Zed Remote Development from Codex.
-- Upstream worktree creation: create new worktrees from `upstream/<base-branch>` after fetching the remote branch, reducing conflicts caused by stale local HEAD state.
-- GitHub Release updates. Both the manager and silent launcher can detect available updates.
-- Windows single instance, no console window, administrator manifest, and system Desktop path detection.
-- Separate macOS x64 and arm64 DMGs. The silent launcher hides its Dock icon.
+Browse, install, enable, and disable community JavaScript scripts from a GitHub repository. Scripts are injected into the Codex renderer via CDP to extend the UI and add custom features.
 
-## Enhancements
+### Session Management
 
-Enhancements are controlled in the manager. Enhancement injection is enabled by default. When disabled, Codex++ will not inject its menu or scripts.
+List and delete Codex local SQLite sessions, with provider sync support.
 
-## Updates and Packages
+### Install & Maintenance
 
-Codex++ publishes installers through GitHub Releases. Windows builds an NSIS installer, while macOS builds separate Intel x64 and Apple Silicon arm64 DMGs.
+Detect/repair entry points and shortcuts, Watcher (auto-restart Codex on crash), manual launch with custom ports.
 
-The manager's About page can check and start updates. When the silent launcher finds a new version, it opens the manager directly on the update prompt.
+### Auto Update
+
+GitHub Release update detection. The manager can download and install updates. The silent launcher automatically opens the manager when a new version is available.
+
+## Codex++ Menu
+
+After launching Codex, a `Codex++` menu appears in the top bar with two tabs:
+
+- **Home** — Backend connection status, enhancement toggles, diagnostics
+- **User Scripts** — Manage installed user scripts (enable/disable/reload)
+
+## How It Works
+
+```
+codex-plus-plus.exe (launcher)
+  ├─ Starts Helper TCP server (:57321)
+  ├─ Starts Codex (with --remote-debugging-port)
+  ├─ Connects to Codex renderer via CDP
+  ├─ Runtime.addBinding → creates bridge function
+  └─ Page.addScriptToEvaluateOnNewDocument → injects renderer-inject.js
+```
+
+Codex++ injects JavaScript into Codex's Chromium renderer via CDP to implement enhancements. No original Codex files are modified. See [docs/startup-flow.md](docs/startup-flow.md) for details.
 
 ## Data Locations
 
-- Codex config: `~/.codex/config.toml`
-- Codex auth state: `~/.codex/auth.json`
-- Codex local database: `~/.codex/state_5.sqlite`
-- Codex++ state and logs: `~/.codex-session-delete/`
-- Provider Sync backups: `~/.codex/backups_state/provider-sync`
+| Path | Content |
+|---|---|
+| `~/.codex/config.toml` | Codex configuration |
+| `~/.codex/auth.json` | Codex login state |
+| `~/.codex/state_5.sqlite` | Codex local session database |
+| `~/.codex-session-delete/` | Codex++ status and logs |
 
 ## FAQ
 
-### The Codex++ menu does not appear
+### Codex++ menu not appearing
 
-Make sure Codex was launched from the `Codex++` entry instead of the original Codex entry. You can also inspect the Diagnostics and Logs pages in the manager.
+Make sure you launched from the `Codex++` entry point, not the original Codex. Check the manager's "About" page for logs.
 
-### The plugin says the backend is disconnected
+### Plugin shows backend connection failure
 
-First test the helper endpoint:
+Test the backend endpoint first:
 
 ```powershell
 Invoke-RestMethod -Method Post -Uri http://127.0.0.1:57321/backend/status -Body "{}" -ContentType "application/json"
 ```
 
-If the endpoint works but the plugin still times out, it is usually a Codex page CDP bridge or script cache issue. Restart Codex++, or check manager logs for `renderer.script_loaded`, `bridge.request`, and `bridge.response`.
+If the endpoint works but the plugin still times out, it's usually a CDP bridge or script cache issue. Restart Codex++ or check the manager logs.
 
-### How is Upstream worktree different from Codex native creation?
+### macOS says "cannot be opened" or "is damaged"
 
-Codex++ updates the remote branch first, then creates the worktree as if you ran:
+Unsigned/notarized installers are blocked by Gatekeeper. Run in terminal:
 
 ```bash
-git worktree add -b <new-branch> <worktree-path> upstream/<base-branch>
+sudo xattr -rd com.apple.quarantine /Applications/Codex++\ Manager.app
+sudo xattr -rd com.apple.quarantine /Applications/Codex++.app
 ```
-
-The new worktree starts from the fresh remote tracking branch instead of the local HEAD used by the current session. If Codex++ cannot safely recognize the current Codex version's native worktree form, use the Codex++ menu entry and enter the repository path, branch name, worktree path, remote, and base branch manually.
-
-### macOS says the app cannot be opened or is damaged
-
-Unsigned and unnotarized builds may be blocked by Gatekeeper. Allow the app in System Settings -> Privacy & Security. For formal distribution, configure Apple Developer ID signing and notarization.
-
-### Does it support Intel Macs?
-
-Yes. Releases provide both `macos-x64.dmg` and `macos-arm64.dmg`. Intel Macs should use the x64 package, while Apple Silicon Macs should use the arm64 package.
 
 ## Development
 
 ```bash
-# Frontend checks
+# Frontend
 cd apps/codex-plus-manager
 npm install
-npm run check
-npm run vite:build
+npm run check       # TypeScript check
+npm run vite:build   # Build frontend
 
-# Rust checks
-cd ../..
-cargo fmt --check
-cargo test
-cargo build --release
+# Rust
+cargo xcheck         # Type check
+cargo xtest          # Run tests
+cargo build --release # Build release
 ```
 
 Project structure:
 
 ```text
 apps/
-  codex-plus-launcher/          Silent launcher
-  codex-plus-manager/           Tauri manager
+  codex-plus-launcher/          Silent launcher entry
+  codex-plus-manager/           Tauri manager app
 assets/inject/
-  renderer-inject.js            Enhancement script injected into Codex
+  renderer-inject.js            JS injected into Codex renderer
 crates/
-  codex-plus-core/              Launch, injection, config, update, install, bridge
-  codex-plus-data/              Session data, export, Provider Sync
+  codex-plus-core/              Core logic: launch, inject, config, update, bridge
+  codex-plus-data/              Session data, export, provider sync
 scripts/installer/
   windows/CodexPlusPlus.nsi     Windows NSIS installer
-  macos/package-dmg.sh          macOS DMG packager
+  macos/package-dmg.sh          macOS DMG packaging
 ```
-
-## Community and Support
-
-Scan the QR code to join the Codex++ discussion group, report issues, share usage notes, or suggest features:
-
-<img src="docs/images/discussion-group-qr.jpg" alt="Codex++ discussion group QR code" width="260">
-
-If Codex++ has helped you, you can buy me a coffee or send a small tip to support continued maintenance.
-
-<p align="center">
-  <img src="docs/images/sponsor-alipay.jpg" alt="Alipay sponsor QR code" width="220">
-  <img src="docs/images/sponsor-wechat.jpg" alt="WeChat sponsor QR code" width="220">
-</p>
-
-## Friendly Links
-
-- [LINUX DO](https://linux.do)
 
 ## Notes
 
-Codex++ is an external enhancement tool and does not modify original Codex App files. If a future Codex App update changes page structure, the injection script may need updates.
+Codex++ is an external enhancement tool that does not modify Codex App's original files. After a Codex App update, the injection script may need to be updated if the page structure changes.
